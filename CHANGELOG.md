@@ -1,3 +1,9 @@
+# 2021-12-31 v1.6
+- Created subfolder-based creation, e.g. cache/, sql/, and out/
+- convert.py: shader custom property is now fx
+- convert.py: added *.emt (sound emitter) support
+- eqgzi: eqg is now created from scratch on import
+
 # 2021-12-26 v1.5
 - convert.py: Added _emit.txt support (custom property "emit" on any object in blender generates it)
 - convert.py: Lights auto prefix LIB_ to them if no LIB_ or LIT_ is found

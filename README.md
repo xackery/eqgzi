@@ -7,6 +7,10 @@ EQEmu Zone Importer
 - Add character references (zonename_chr.txt)
 - Add sound emitters (zonename.emt)
 
+# Changing Version Number
+- Search for `title = "EQG Zone Importer`
+- Search for `Exported by EQG Zone Importer`
+- Ensure CHANGELOG.md has an entry for new version
 
 # Usage
 - Textures must be in same directory as .obj file for import, due to how referencing is built inside EQG
