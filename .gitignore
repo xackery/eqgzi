@@ -2,6 +2,10 @@
 release-history/
 data/
 
+*.recipe
+
+gui/Release-gui/
+
 # Prerequisites
 *.d
 
