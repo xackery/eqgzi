@@ -33,6 +33,8 @@ class Writer:
         self.path = path
     def write(self, text):
         if not self.isCreated:
+            if self.path.find("sql") and not os.path.exists(sql_path):
+                os.makedirs(sql_path)
             self.w = open(self.path, "w+")
             self.isCreated = True
             if self.path.endswith("_EnvironmentEmitters.txt"):
@@ -52,7 +54,7 @@ fl = Writer(cache_path + "/" + base_name + "_light.txt")
 fr = Writer(cache_path + "/" + base_name + "_region.txt")
 fm = Writer(cache_path + "/" + base_name + "_material.txt")
 fmod = Writer(cache_path + "/" + base_name + "_mod.txt")
-fsg = Writer(sql_path + "/" + base_name + "_spawngroup.sql")
+fsg = Writer(sql_path + "/" + base_name + "_spawngroup_sql")
 fs2 = Writer(sql_path + "/" + base_name + "_spawn2.sql")
 
 print("Step 1) Deleting cache / out paths...")
@@ -106,6 +108,42 @@ def process(name, location, o):
         fsnd.write(str(o.get("sound_xmi_index", "0"))+",")
         fsnd.write(str(o.get("sound_echo", "0"))+",")
         fsnd.write(str(o.get("sound_env_toggle", "1"))+"\n")
+    
+    if o.get("spawngroup_id", "0") != "0":
+        id = o.get("id", 0)
+        spawngroupid = o.get("spawngroupid", 0)
+        if not spawngroupid in spawngroups:
+            spawngroups[spawngroupid] = SpawnGroup(id, spawngroupid)
+        if o.get("spawngroup_name", "0") != "0":
+            spawngroups[spawngroupid].name = o["spawngroup_name"]
+        if o.get("spawngroup_spawn_limit", "0") != "0":
+            spawngroups[spawngroupid].spawn_limit = o["spawngroup_spawn_limit"]
+        if o.get("spawngroup_dist", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_dist"]
+        if o.get("spawngroup_max_x", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_max_x"]
+        if o.get("spawngroup_max_y", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_max_y"]
+        if o.get("spawngroup_min_x", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_min_x"]
+        if o.get("spawngroup_min_y", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_min_y"]
+        if o.get("spawngroup_delay", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_delay"]
+        if o.get("spawngroup_mindelay", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_mindelay"]
+        if o.get("spawngroup_despawn", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_despawn"]
+        if o.get("spawngroup_despawn_timer", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_despawn_timer"]
+        if o.get("spawngroup_wp_spawns", "0") != "0":
+            spawngroups[spawngroupid].dist = o["spawngroup_wp_spawns"]
+        fs2.write("REPLACE INTO spawn2 (id, spawngroupid, x, y, z, heading, respawntime, variance, pathgrid, version) VALUES(")
+        fs2.write(str(o.get("id", "0")) + ", " +str(o.get("spawngroupid", "0"))+ ", ")
+        fs2.write(str(location.x*2)+", "+str(location.y*2)+", "+str(location.z*2)+", ")
+        fs2.write(str(o.rotation_euler.z)+ ", "+str(o.get("respawntime", "0"))+ ", ")
+        fs2.write(str(o.get("variance", "0"))+ ", "+str(o.get("pathgrid", "0"))+", ")
+        fs2.write(str(o.get("version", "0"))+");\n")
 
     if o.type == 'LIGHT':
         li = o.data
@@ -208,8 +246,6 @@ for o in bpy.data.objects:
     bpy.ops.export_scene.obj(filepath=obj_file, check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=True, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
     bpy.data.objects.remove(o, do_unlink=True)
 
-
-
 print("Step 6) Processing zone objects...")
 bpy.ops.object.select_all(action='DESELECT')
 for o in bpy.data.objects:
@@ -218,41 +254,9 @@ for o in bpy.data.objects:
     if o.type != 'MESH':
         bpy.data.objects.remove(o, do_unlink=True)
         continue
-    if o.type == 'MESH' and o.get("id", "0") != "0" and o.get("spawngroupid", "0") != "0":
-        id = o.get("id", 0)
-        spawngroupid = o.get("spawngroupid", 0)
-        if not spawngroupid in spawngroups:
-            spawngroups[spawngroupid] = SpawnGroup(id, spawngroupid)
-        if o.get("spawngroup.name", "0") != "0":
-            spawngroups[spawngroupid].name = o["spawngroup.name"]
-        if o.get("spawngroup.spawn_limit", "0") != "0":
-            spawngroups[spawngroupid].spawn_limit = o["spawngroup.spawn_limit"]
-        if o.get("spawngroup.dist", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.dist"]
-        if o.get("spawngroup.max_x", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.max_x"]
-        if o.get("spawngroup.max_y", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.max_y"]
-        if o.get("spawngroup.min_x", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.min_x"]
-        if o.get("spawngroup.min_y", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.min_y"]
-        if o.get("spawngroup.delay", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.delay"]
-        if o.get("spawngroup.mindelay", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.mindelay"]
-        if o.get("spawngroup.despawn", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.despawn"]
-        if o.get("spawngroup.despawn_timer", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.despawn_timer"]
-        if o.get("spawngroup.wp_spawns", "0") != "0":
-            spawngroups[spawngroupid].dist = o["spawngroup.wp_spawns"]
-        fs2.write("REPLACE INTO spawn2 (id, spawngroupid, x, y, z, heading, respawntime, variance, pathgrid, version) VALUES("+str(o.get("id", "0")) + ", " +str(o.get("spawngroupid", "0"))+ ", "+str(o.location.x*2)+", "+str(o.location.y*2)+", "+str(o.location.z*2)+", "+str(o.rotation_euler.z)+ ", "+str(o.get("respawntime", "0"))+ ", "+str(o.get("variance", "0"))+ ", "+str(o.get("pathgrid", "0"))+ ", "+str(o.get("version", "0"))+");\r\n")
-        bpy.data.objects.remove(o, do_unlink=True)
-        continue
 
 for sp in spawngroups:
-    fsg.write("REPLACE INTO spawngroup (id, name, spawn_limit, dist, max_x, min_x, max_x, min_y, delay, mindelay, despawn, despawn_timer, wp_spawns) VALUES ("+str(spawngroups[sp].id)+", "+str(spawngroups[sp].name)+", "+str(spawngroups[sp].spawn_limit)+", "+str(spawngroups[sp].dist)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_x)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_y)+", "+str(spawngroups[sp].delay)+", "+str(spawngroups[sp].mindelay)+", "+str(spawngroups[sp].despawn)+", "+str(spawngroups[sp].despawn_timer)+", "+str(spawngroups[sp].wp_spawns)+");\r\n")
+    fsg.write("REPLACE INTO spawngroup (id, name, spawn_limit, dist, max_x, min_x, max_x, min_y, delay, mindelay, despawn, despawn_timer, wp_spawns) VALUES ("+str(spawngroups[sp].id)+", '"+str(spawngroups[sp].name)+"', "+str(spawngroups[sp].spawn_limit)+", "+str(spawngroups[sp].dist)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_x)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_y)+", "+str(spawngroups[sp].delay)+", "+str(spawngroups[sp].mindelay)+", "+str(spawngroups[sp].despawn)+", "+str(spawngroups[sp].despawn_timer)+", "+str(spawngroups[sp].wp_spawns)+");\n")
 
 print("Step 7) Exporting zone .obj")
 bpy.ops.export_scene.obj(filepath=cache_path + "/" + base_name + '.obj', check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=False, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')

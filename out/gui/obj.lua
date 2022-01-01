@@ -21,15 +21,15 @@ local function ReadMTL(path)
 			if cmd == "newmtl" then
 				cur = {}
 				out[args] = cur
-				log_write("Found material '" .. args .. "'")
+				-- log_write("Found material '" .. args .. "'")
 			elseif cmd == "map_kd" then
 				local name = args:match("[%w_]+%.%w+")
 				cur.diffuse_map = name
-				log_write("Found diffuse map name '" .. name .. "'")
+				-- log_write("Found diffuse map name '" .. name .. "'")
 			elseif cmd == "map_bump" then
 				local name = args:match("[%w_]+%.%w+")
 				cur.e_TextureNormal0 = name
-				log_write("Found normal map name '" .. name .. "'")
+				-- log_write("Found normal map name '" .. name .. "'")
 			end
 		end
 	end
@@ -57,7 +57,7 @@ function Split(s, delimiter)
 end
 
 function obj.Import(path, dir, appending, shortname)
-	log_write("Starting IMPORT from OBJ format from path " .. path)
+	log_write("import "..path..": starting")
 	local f, err = io.open(path, "r")
 	if err then
 		error("import "..path..": "..err)
@@ -68,8 +68,6 @@ function obj.Import(path, dir, appending, shortname)
 	for n in fstr:gmatch("\n") do
 		line_count = line_count + 1
 	end
-
-	log_write("Found OBJ file with " .. line_count .. " lines at '" .. path .. "'")
 
 	local materials = {}
 	local vertices = {}

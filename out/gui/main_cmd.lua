@@ -141,10 +141,10 @@ function obj_import(shortname)
 				
 				table.insert(models, modelName)
 				modelIndex = #models
-				log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)				
+				-- log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)				
 			end
 
-			log_write("Found " .. lines[1] .. " as index " .. modelIndex)
+			-- log_write("Found " .. lines[1] .. " as index " .. modelIndex)
 
 			table.insert(objects, {name = lines[2],
 				id = modelIndex-1,
