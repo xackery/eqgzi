@@ -31,21 +31,12 @@ class Writer:
     def __init__(self, path):
         self.isCreated = False
         self.path = path
-        #self.isLightHeader = False
-        #self.isRegionHeader = False
-        #self.isMaterialHeader = False
-        #self.isSpawn2Header = False
-        #self.isSpawnGroupHeader = False
-        #self.isModHeader = False
-        #self.isEmitHeader = False
-        #self.isSndHeader = False
-        #fmod = open(out_path + "/" + base_name + "_mod.txt", "w+")
     def write(self, text):
         if not self.isCreated:
             self.w = open(self.path, "w+")
             self.isCreated = True
             if self.path.endswith("_EnvironmentEmitters.txt"):
-                fe.write("Name^EmitterDefIdx^X^Y^Z^Lifespan\n")
+                self.w.write("Name^EmitterDefIdx^X^Y^Z^Lifespan\n")
         self.w.write(text)
     
 blend_file_path = bpy.data.filepath
@@ -63,7 +54,6 @@ fm = Writer(cache_path + "/" + base_name + "_material.txt")
 fmod = Writer(cache_path + "/" + base_name + "_mod.txt")
 fsg = Writer(sql_path + "/" + base_name + "_spawngroup.sql")
 fs2 = Writer(sql_path + "/" + base_name + "_spawn2.sql")
-
 
 print("Step 1) Deleting cache / out paths...")
 # Delete contents of out path
@@ -129,7 +119,6 @@ def process(name, location, o):
         if o.empty_display_type == 'CUBE':
             fr.write(name.replace(" ", "-") + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
 
-
 print("Step 2) Applying modifiers...")
 bpy.ops.object.mode_set(mode = 'OBJECT')
 for o in bpy.data.objects:
@@ -184,7 +173,7 @@ for o in bpy.data.objects:
     col = o.instance_collection
     for co in col.objects:
         print(co.name+ " found and processed")
-        process(o.name, o.location, co)
+        process(o.name, o.location+co.location, co)
         if co.type != 'MESH':
             bpy.data.objects.remove(co, do_unlink=True)
     if not col.library:
@@ -267,3 +256,4 @@ for sp in spawngroups:
 
 print("Step 7) Exporting zone .obj")
 bpy.ops.export_scene.obj(filepath=cache_path + "/" + base_name + '.obj', check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=False, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
+exit(0)
