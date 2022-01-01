@@ -48,9 +48,6 @@ class Writer:
                 fe.write("Name^EmitterDefIdx^X^Y^Z^Lifespan\n")
         self.w.write(text)
     
-
-
-
 blend_file_path = bpy.data.filepath
 directory = os.path.dirname(blend_file_path)
 base_name = os.path.basename(blend_file_path).removesuffix(".blend")
@@ -63,16 +60,20 @@ fsnd = Writer(out_path + "/" + base_name + ".emt")
 fl = Writer(cache_path + "/" + base_name + "_light.txt")
 fr = Writer(cache_path + "/" + base_name + "_region.txt")
 fm = Writer(cache_path + "/" + base_name + "_material.txt")
+fmod = Writer(cache_path + "/" + base_name + "_mod.txt")
 fsg = Writer(sql_path + "/" + base_name + "_spawngroup.sql")
 fs2 = Writer(sql_path + "/" + base_name + "_spawn2.sql")
 
+
+print("Step 1) Deleting cache / out paths...")
 # Delete contents of out path
 if not os.path.exists(out_path):
     os.makedirs(out_path)
 print("out path: " + out_path)
 for f in os.listdir(out_path):
-    print("removing old file in out dir: "+f)
-    os.remove(os.path.join(out_path, f))
+    if not os.path.isdir(os.path.join(out_path, f)):
+        print("removing old file in out dir: "+f)
+        os.remove(os.path.join(out_path, f))
 
 
 # Delete contents of cache path
@@ -80,30 +81,31 @@ if not os.path.exists(cache_path):
     os.makedirs(cache_path)
 print("cache path: " + cache_path)
 for f in os.listdir(cache_path):
-    print("removing old file in cache dir: "+f)
-    os.remove(os.path.join(cache_path, f))
+    if not os.path.isdir(os.path.join(cache_path, f)):
+        print("removing old file in cache dir: "+f)
+        os.remove(os.path.join(cache_path, f))
 
 modDefs = {}
 
 def roundFloatStr(value):
     return str(round(value, 4))
 
-def process(o):
+def process(name, location, o):
     # check for any emitter definitions, any object can contain them
     if o.get("emit_id", 0) != 0:
-        print("writing out emit_id "+str(o.get("emit_id", "1"))+" from object "+ o.name)
-        fe.write(o.name + "^" + str(o.get("emit_id", "1")) + "^" + roundFloatStr(-o.location.y*2) + "^" + roundFloatStr(o.location.x*2) +"^" + roundFloatStr(o.location.z*2) + "^" + o.get("emit_duration", "90000000") + "\n")   
+        print("writing out emit_id "+str(o.get("emit_id", "1"))+" from object "+ name)
+        fe.write(name + "^" + str(o.get("emit_id", "1")) + "^" + roundFloatStr(-location.y*2) + "^" + roundFloatStr(location.x*2) +"^" + roundFloatStr(location.z*2) + "^" + o.get("emit_duration", "90000000") + "\n")   
     if o.get("sound", 0) != 0:
-        print("writing out sound "+str(o.get("sound", "1"))+" from object "+ o.name)
+        print("writing out sound "+str(o.get("sound", "1"))+" from object "+ name)
         fsnd.write("2,"+o.get("sound", "none.wav")+",0,")
         fsnd.write(str(o.get("sound_active", "0"))+",")
         fsnd.write(roundFloatStr(o.get("sound_volume", 1.0))+",")
         fsnd.write(str(o.get("sound_fade_in", "0"))+",")
         fsnd.write(str(o.get("sound_fade_out", "0"))+",")
         fsnd.write(str(o.get("sound_type", "0"))+",")
-        fsnd.write(roundFloatStr(-o.location.y*2)+ ",")
-        fsnd.write(roundFloatStr(o.location.x*2)+",")
-        fsnd.write(roundFloatStr(o.location.z*2)+",")
+        fsnd.write(roundFloatStr(-location.y*2)+ ",")
+        fsnd.write(roundFloatStr(location.x*2)+",")
+        fsnd.write(roundFloatStr(location.z*2)+",")
         fsnd.write(roundFloatStr(o.get("sound_radius", 15.0))+",")
         fsnd.write(roundFloatStr(o.get("sound_distance", 50.0))+",")
         fsnd.write(str(o.get("sound_rand_distance", "0"))+",")
@@ -118,32 +120,27 @@ def process(o):
     if o.type == 'LIGHT':
         li = o.data
         if li.type == 'POINT':
-            lightName = o.name.replace(" ", "-")
+            lightName = name.replace(" ", "-")
             if not lightName.startswith("LIB_") and not lightName.startswith("LIT_"):
                 lightName = "LIB_" + lightName
-            fl.write(lightName + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.z*2) + " " + roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
+            fl.write(lightName + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
 
     if o.type == 'EMPTY':
         if o.empty_display_type == 'CUBE':
-            fr.write(o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
+            fr.write(name.replace(" ", "-") + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
 
 
-# apply all modifiers
+print("Step 2) Applying modifiers...")
 bpy.ops.object.mode_set(mode = 'OBJECT')
 for o in bpy.data.objects:
+    if not o.visible_get(view_layer=bpy.context.view_layer):
+        continue
     bpy.context.view_layer.objects.active = o
     for mod in o.modifiers:
         print("applying modifier " + mod.name + " for " + o.name)
         bpy.ops.object.modifier_apply(modifier=mod.name)
 
-# delete any objects not seen in viewport
-
-for o in bpy.data.objects:
-    if not o.visible_get(view_layer=bpy.context.view_layer): 
-        print("removing " + o.name + " (not active view)")
-        bpy.data.objects.remove(o, do_unlink=True)
-        continue
-
+print("Step 3) Writing material properties...")
 for m in bpy.data.materials:
     fm.write("m " + m.name.replace(" ", "-") + " " + str(m.get("flag", 65536)) + " " + str(m.get("fx", "Opaque_MaxCB1.fx")) + "\n")
     for tree in m.texture_paint_slots:
@@ -162,24 +159,73 @@ for m in bpy.data.materials:
                 fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
 
 
-exportedMods = []
- #bpy.data.objects[0].asset_data
+
+print("Step 4) Removing any hidden objects...")
 for o in bpy.data.objects:
-    if "obj_" in o.name:
-        print(o.name + " found as type " + o.type)
-        mi = o.data
-        print(o.asset_data)
-        if o.library:
-            print("has lib")
+    if not o.visible_get(view_layer=bpy.context.view_layer): 
+        print("removing " + o.name + " (not active view)")
+        bpy.data.objects.remove(o, do_unlink=True)
+        continue
+
+
+print("Step 5) Exporting any linked objects...")
+exportedMods = []
+
+for o in bpy.data.objects:
+    if not o.visible_get(view_layer=bpy.context.view_layer):
+        print(o.name + "skipped, it is not visible for export")
+        continue
+    col = o.instance_collection
+    if not col:
+        continue
+    print(col.name +" has a link instance as "+o.name)
+    
+    col.library.reload()
+    col = o.instance_collection
+    for co in col.objects:
+        print(co.name+ " found and processed")
+        process(o.name, o.location, co)
+        if co.type != 'MESH':
+            bpy.data.objects.remove(co, do_unlink=True)
+    if not col.library:
+        print(col.name +" has no library data, skipping export")
+        continue
+    bpy.ops.object.select_all(action='DESELECT')
+    isExported = False
+    for e in exportedMods:
+        if not e == col.name:
+            continue
+        isExported = True
+        break
+    if not isExported:
+        print(col.name + " is going to be exported from " +col.library.name)
+        exportedMods.append(col.name)
+        
+    objName = col.library.name.replace(".blend", ".obj")
+    fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(o.rotation_euler.x) + " " + roundFloatStr(o.rotation_euler.y) + " " + roundFloatStr(o.rotation_euler.z) + " " + roundFloatStr(o.scale.z) + "\n")
+    if isExported:
+        print(col.name+" is already exported, only adding placement instance data")
+        for co in col.objects:
+            bpy.data.objects.remove(co, do_unlink=True)
+        continue
+    obj_file = os.path.join(cache_path, objName)
+    
+    #for attr in dir(col):
+    #    print("col.%s = %r" % (attr, getattr(col, attr)))
+    for co in col.objects:
+        bpy.context.scene.collection.objects.link(co)
+        bpy.context.view_layer.objects.active = co
+        co.select_set(True)
+    bpy.ops.export_scene.obj(filepath=obj_file, check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=True, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
+    bpy.data.objects.remove(o, do_unlink=True)
+
+
+
+print("Step 6) Processing zone objects...")
 bpy.ops.object.select_all(action='DESELECT')
 for o in bpy.data.objects:
-    print(o.name + " found as a type " + o.type)
-    if o.type == 'EMPTY':
-        print("library type?")
-        print(o.users_collection)
-        if o.library:
-            print(o.library)
-    process(o)
+    print(o.name + " processing (" + o.type + ")")
+    process(o.name, o.location, o)
     if o.type != 'MESH':
         bpy.data.objects.remove(o, do_unlink=True)
         continue
@@ -218,5 +264,6 @@ for o in bpy.data.objects:
 
 for sp in spawngroups:
     fsg.write("REPLACE INTO spawngroup (id, name, spawn_limit, dist, max_x, min_x, max_x, min_y, delay, mindelay, despawn, despawn_timer, wp_spawns) VALUES ("+str(spawngroups[sp].id)+", "+str(spawngroups[sp].name)+", "+str(spawngroups[sp].spawn_limit)+", "+str(spawngroups[sp].dist)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_x)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_y)+", "+str(spawngroups[sp].delay)+", "+str(spawngroups[sp].mindelay)+", "+str(spawngroups[sp].despawn)+", "+str(spawngroups[sp].despawn_timer)+", "+str(spawngroups[sp].wp_spawns)+");\r\n")
-    
-bpy.ops.export_scene.obj(filepath=cache_path + "/" + base_name + '.obj', check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=False, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='AUTO')
+
+print("Step 7) Exporting zone .obj")
+bpy.ops.export_scene.obj(filepath=cache_path + "/" + base_name + '.obj', check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=False, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')

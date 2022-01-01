@@ -4,6 +4,8 @@ local eqg = require "luaeqg"
 local obj = require "gui/obj"
 require "gui/loader"
 
+dir = {}
+
 function assert(result, msg)
 	if result then return result end
 	io.stdout:write(msg .. "\n")
@@ -43,65 +45,40 @@ function dump(o)
 
 function obj_import(shortname)
 	-- local shortname = eqg_path:match("([%s%w_]+)%.eqg$")
-	if not shortname then 
+	if not shortname then
 		error("obj_import: no shortname provided") 
 	end
 
 	shortname = shortname:lower()
 
-	local obj_path = shortname .. ".obj"
+	local obj_path = "cache/" .. shortname .. ".obj"
 	local eqg_path = "out/" .. shortname .. ".eqg"
-
-
 
 	local s, dir = pcall(eqg.WriteDirectory, eqg_path, {})
 	if not s then
 		error("failed creating new EQG file: " .. dir)
 	end
-	if not dir then
-		dir = {}
-	end
+	
+	dir = {}
 	open_path = eqg_path
 	open_dir = dir
-	local pos, ter_name, zon_pos
-	for i, ent in ipairs(dir) do
-		local name = ent.name
-		local ext = name:match("%.(%w+)$")
-		if ext == "ter" then
-			ter_name = name
-			pos = i
-		elseif ext == "zon" then
-			zon_pos = i
-		end
-	end
-	if not pos then
-		ter_name = shortname .. ".ter"
-		pos = #dir + 1
-	end
-
-	if pos < #dir then
-		--delete .ter file's matching .lit file, if any
-		local lit = ter_name:sub(1, -4) .. "lit"
-		for i, ent in ipairs(dir) do
-			if ent.name == lit then
-				table.remove(dir, i)
-				if pos > i then
-					pos = pos - 1
-				end
-			end
-		end
-	end
+	ter_name = shortname .. ".ter"
+	
+	pos = 1
+	dir[pos] = {pos = pos, name = shortname .. ".ter"}
+	by_name[shortname .. ".ter"] = dir[pos]
 
 	DirNames(dir)
+
 
 	local lights = {}
 	--table.insert(lights, {name = "test", x = 1, y = 2, z = 3, r = 1, g = 2, b = 3, radius = 3})
 
-	local f = io.open("out/" .. shortname .. "_light.txt", "rb")
+	local f = io.open("cache/" .. shortname .. "_light.txt", "rb")
 	if f then		
 		f:close()
 		local lineNumber = 0
-		for line in io.lines("out/" .. shortname .. "_light.txt") do
+		for line in io.lines("cache/" .. shortname .. "_light.txt") do
 			lineNumber = lineNumber + 1
 			lines = Split(line, " ")			
 			if not #lines == 8 then
@@ -151,24 +128,26 @@ function obj_import(shortname)
 			if not #lines == 9 then
 				error("expected 9 entries, got " .. #lines)
 			end
-			
+
+			local modelName = string.gsub(lines[1], ".obj", ".mod")
+				
 			local modelIndex = -1
 			for i = 1, #models do
-				if models[i] ==  lines[1] then
+				if models[i] == modelName then
 					modelIndex = i
 				end
 			end
 			if modelIndex == -1 then
-				modelIndex = #models
-				local modelName = string.gsub(lines[1], ".obj", ".mod")
+				
 				table.insert(models, modelName)
+				modelIndex = #models
 				log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)				
 			end
 
 			log_write("Found " .. lines[1] .. " as index " .. modelIndex)
 
 			table.insert(objects, {name = lines[2],
-				id = modelIndex,
+				id = modelIndex-1,
 				x = lines[3], y = lines[4], z = lines[5],
 				rotation_x = lines[6], rotation_y = lines[7], rotation_z = lines[8],
 				scale = lines[9],
@@ -177,8 +156,8 @@ function obj_import(shortname)
 		log_write("Added " .. #models .. " models, " .. #objects .. " objects based on " .. shortname .. "_mod.txt")
 	end
 	
-	dir[pos] = {pos = pos, name = ter_name}
-	local ter_data = obj.Import(obj_path, dir, (pos > #dir), shortname)
+	local ter_data = obj.Import(obj_path, dir, true, shortname)
+
 	local zon_data = {
 		models = models,
 		objects = objects,
@@ -186,51 +165,64 @@ function obj_import(shortname)
 		lights = lights,
 	}
 
+
+
+	pos = 1
+	dir[pos] = {pos = pos, name = ter_name}
+	by_name[ter_name] = dir[pos]
+	
+	local s, ter_ent = pcall(ter.Write, ter_data, ter_name, eqg.CalcCRC(ter_name))
+	if not s then
+		error("ter.write " .. ter_name .. " failed: " .. ter_ent)
+	end
+
+	ter_ent.pos = pos
+	dir[pos] = ter_ent
+
+
 	local zon_name = shortname .. ".zon"
-
-
-	log_write("Attempting to save '" .. ter_name .. "' to " .. eqg_path)
-
-	local s, data = pcall(ter.Write, ter_data, ter_name, eqg.CalcCRC(ter_name))
-	if s then
-		dir[GetDirPos(ter_name)] = data
-	else
-		error("Error writing '" .. ter_name .. "': " .. data)
+	pos = #dir+1
+	log_write("zon pos: "..pos)
+	dir[pos] = {pos = pos, name = zon_name}
+	by_name[zon_name] = dir[pos]
+	
+	local s, zon_ent = pcall(zon.Write, zon_data, zon_name, eqg.CalcCRC(zon_name))
+	if not s then
+		error("zon.write " .. zon_name .. " failed: " .. zon_ent)
 	end
 
-	
+	zon_ent.pos = pos
+	dir[pos] = zon_ent
+
 	for i = 2, #models do
-		local modelName = string.gsub(models[i], ".mod", "")
-		log_write("Attempting to save '" .. modelName .. "' as '" .. modelName .. ".mod")
 		
-		local data = obj.Import(modelName .. ".obj", dir, (pos > #dir), shortname)
-		data.bones = {}
-		data.bone_assignments = {}
-		local s, err = pcall(mod.Write, data, modelName .. ".mod", eqg.CalcCRC(modelName))
+		pos = #dir + 1
+		
+		local modelBaseName = string.gsub(models[i], ".mod", "")
+		local modelName = models[i]
+
+		--dir[pos] = {pos = pos, name = modelName .. ".mod"}
+		--by_name[modelName .. ".mod"] = dir[pos]
+
+		log_write("Attempting to save '" .. modelName .. "' as '" .. modelName)
+		
+		local mod_ent = obj.Import("cache/" .. modelBaseName .. ".obj", dir, true, shortname)
+		mod_ent.bones = {}
+		mod_ent.bone_assignments = {}
+		s, mod_data = pcall(mod.Write, mod_ent, modelName, eqg.CalcCRC(modelName))
 		if not s then
-			error("mod write returned no result")
+			error("mod.write " .. modelName .. ".mod failed: "..err)
 		end
-		-- TODO: fix dir appending
-		-- by_name[modelName .. ".mod"] = pos + 1
-		-- dir[GetDirPos(modelName .. ".mod")] = data
+		mod_data.name = modelName
+		mod_data.pos = pos
+		dir[pos] = mod_data
 	end
 
-	
-	
-	log_write("Attempting to save '" .. zon_name .. "' to " .. eqg_path)
-
-	s, data = pcall(zon.Write, zon_data, zon_name, eqg.CalcCRC(zon_name))
-	if s then
-		dir[GetDirPos(zon_name)] = data
-	else
-		error("Error writing '" .. zon_name, "': " .. data)
-	end
-
-	DirNames(dir)	
+	DirNames(dir)
 
 	s, data = pcall(eqg.WriteDirectory, eqg_path, dir)
 	if not s then
-		error("Error writing to " .. eqg_path .. ": " .. data)
+		error("eqg.write " .. eqg_path .. " failed: " .. data)
 	end
 
 	log_write("Saved successfully to " .. eqg_path)

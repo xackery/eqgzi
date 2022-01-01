@@ -58,7 +58,10 @@ end
 
 function obj.Import(path, dir, appending, shortname)
 	log_write("Starting IMPORT from OBJ format from path " .. path)
-	local f = assert(io.open(path, "r"))
+	local f, err = io.open(path, "r")
+	if err then
+		error("import "..path..": "..err)
+	end
 	local fstr = f:read("*a")
 	f:seek("set")
 	local line_count = 0
@@ -261,7 +264,7 @@ function obj.Import(path, dir, appending, shortname)
 			folder = "./"
 		end
 		log_write("Searching for texture files to import from directory '" .. folder .. "' (path: " .. path .. ")")
-		local append_pos = appending and (#dir + 2) or (#dir + 1)
+		local append_pos = (#dir + 1)
 		local load_img = function(name)
 			local mat_path = folder .. name
 			-- log_write("Attempting to find file '" .. name .. "' at '" .. mat_path .. "'")
@@ -283,6 +286,7 @@ function obj.Import(path, dir, appending, shortname)
 				if util.IsConsole() then log_write("Find file '" .. name .. "' failed with error: " .. err) end
 				return
 			end
+			dir[pos].pos = pos
 		end
 
 		for mat_name, mat in pairs(mat_src) do

@@ -34,7 +34,7 @@ namespace Util
 		if (m[0] != magic[0] || m[1] != magic[1] || m[2] != magic[2] || m[3] != magic[3])
 		{
 			char msg[256];
-			snprintf(msg, 256, "data is not a valid %s file", err_name);
+			snprintf(msg, 256, "checkheader: wanted %s, got %s, invalid %s file", m, magic, err_name);
 			luaL_argerror(L, 1, msg);
 		}
 

@@ -1,6 +1,7 @@
 *_triangles.txt
 release-history/
 data/
+out/gui/settings.lua
 
 *.recipe
 
