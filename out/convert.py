@@ -1,5 +1,6 @@
 import bpy
 import os
+import shutil
 
 from bpy.types import ViewLayer
 
@@ -110,7 +111,7 @@ def process(name, location, o):
         fsnd.write(str(o.get("sound_env_toggle", "1"))+"\n")
     
     if o.get("spawngroup_id", "0") != "0":
-        id = o.get("id", 0)
+        id = o.get("spawn2_id", 0)
         spawngroupid = o.get("spawngroupid", 0)
         if not spawngroupid in spawngroups:
             spawngroups[spawngroupid] = SpawnGroup(id, spawngroupid)
@@ -139,11 +140,11 @@ def process(name, location, o):
         if o.get("spawngroup_wp_spawns", "0") != "0":
             spawngroups[spawngroupid].dist = o["spawngroup_wp_spawns"]
         fs2.write("REPLACE INTO spawn2 (id, spawngroupid, x, y, z, heading, respawntime, variance, pathgrid, version) VALUES(")
-        fs2.write(str(o.get("id", "0")) + ", " +str(o.get("spawngroupid", "0"))+ ", ")
+        fs2.write(str(o.get("spawn2_id", "0")) + ", " +str(o.get("spawn2_spawngroupid", "0"))+ ", ")
         fs2.write(str(location.x*2)+", "+str(location.y*2)+", "+str(location.z*2)+", ")
-        fs2.write(str(o.rotation_euler.z)+ ", "+str(o.get("respawntime", "0"))+ ", ")
-        fs2.write(str(o.get("variance", "0"))+ ", "+str(o.get("pathgrid", "0"))+", ")
-        fs2.write(str(o.get("version", "0"))+");\n")
+        fs2.write(str(o.rotation_euler.z)+ ", "+str(o.get("spawn2_respawntime", "0"))+ ", ")
+        fs2.write(str(o.get("spawn2_variance", "0"))+ ", "+str(o.get("spawn2_pathgrid", "0"))+", ")
+        fs2.write(str(o.get("spawn2_version", "0"))+");\n")
 
     if o.type == 'LIGHT':
         li = o.data
@@ -182,8 +183,16 @@ for m in bpy.data.materials:
             if k.startswith("e_"):
                 eValue = str(m[k])
                 if eValue.find(" ") == -1:
-                    eValue = "0 "+eValue
+                    eValue = "0 "+eValue                
                 fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
+                for entry in eValue.split(" "):
+                    if entry.find(".dds") == -1:
+                        continue                
+                    if not os.path.exists(entry):
+                        print("failed to find "+entry+" in current path, defined on material "+m.name)
+                        exit(1)
+                    print("copying "+entry+" to cache")
+                    shutil.copyfile(entry, "cache/"+entry)
 
 
 

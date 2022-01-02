@@ -111,11 +111,11 @@ function obj.Import(path, dir, appending, shortname)
 
 	local material_flags = {}
 	local shortname = path:match("([%s%w_]+)%.obj$")
-	local fm = io.open(shortname .. "_material.txt", "rb")
+	local fm = io.open("cache/".. shortname .. "_material.txt", "rb")
 	if fm then
 		fm:close()
 		local lineNumber = 0
-		for line in io.lines(shortname .. "_material.txt") do
+		for line in io.lines("cache/".. shortname .. "_material.txt") do
 			lineNumber = lineNumber + 1
 			lines = Split(line, " ")
 			if not lines[1]  == "m" and not lines[1] == "e" then
