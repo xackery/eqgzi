@@ -32,6 +32,8 @@ class Writer:
     def __init__(self, path):
         self.isCreated = False
         self.path = path
+    def IsCreated(self):
+        return self.isCreated
     def write(self, text):
         if not self.isCreated:
             if self.path.find("sql") and not os.path.exists(sql_path):
@@ -40,6 +42,9 @@ class Writer:
             self.isCreated = True
             if self.path.endswith("_EnvironmentEmitters.txt"):
                 self.w.write("Name^EmitterDefIdx^X^Y^Z^Lifespan\n")
+            if self.path.endswith("_doors.sql"):
+                self.w.write("DELETE FROM doors WHERE zone = '"+base_name+"';\n")
+                self.w.write("INSERT INTO doors (doorid, zone, `name`, pos_x, pos_y, pos_z, heading, opentype, guild, lockpick, keyitem, nokeyring, triggerdoor, triggertype, disable_timer, doorisopen, door_param, dest_zone, dest_instance, dest_x, dest_y, dest_z, dest_heading, invert_state, incline, size, buffer, client_version_mask, is_ldon_door, min_expansion, max_expansion) VALUES\n")
         self.w.write(text)
     
 blend_file_path = bpy.data.filepath
@@ -57,6 +62,8 @@ fm = Writer(cache_path + "/" + base_name + "_material.txt")
 fmod = Writer(cache_path + "/" + base_name + "_mod.txt")
 fsg = Writer(sql_path + "/" + base_name + "_spawngroup_sql")
 fs2 = Writer(sql_path + "/" + base_name + "_spawn2.sql")
+fdoor = Writer(cache_path + "/" + base_name + "_doors.txt")
+fdoorsql = Writer(sql_path + "/" + base_name + "_doors.sql")
 
 print("Step 1) Deleting cache / out paths...")
 # Delete contents of out path
@@ -236,9 +243,46 @@ for o in bpy.data.objects:
     if not isExported:
         print(col.name + " is going to be exported from " +col.library.name)
         exportedMods.append(col.name)
-        
+
     objName = col.library.name.replace(".blend", ".obj")
-    fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(o.rotation_euler.x) + " " + roundFloatStr(o.rotation_euler.y) + " " + roundFloatStr(o.rotation_euler.z) + " " + roundFloatStr(o.scale.z) + "\n")
+
+    if o.get("door_id", "0") != "0":
+        print(col.name + " has door data")
+        fdoor.write(objName + "\n")
+        if fdoorsql.IsCreated():
+            fdoorsql.write(", \n")
+        fdoorsql.write("(" + str(o.get("door_id", "0"))+", ")
+        fdoorsql.write("'"+base_name+"', ")
+        fdoorsql.write("'"+o.name.replace(" ", "-")+"', ")
+        fdoorsql.write(roundFloatStr(-o.location.y*2) + ", " + roundFloatStr(o.location.x*2) + ", " + roundFloatStr(o.location.z*2)+", ")
+        fdoorsql.write(roundFloatStr(o.rotation_euler.z)+", ") # heading
+        fdoorsql.write(str(o.get("door_opentype", "0"))+", ")
+        fdoorsql.write(str(o.get("door_guild", "0"))+", ")
+        fdoorsql.write(str(o.get("door_lockpick", "0"))+", ")
+        fdoorsql.write(str(o.get("door_keyitem", "0"))+", ")
+        fdoorsql.write(str(o.get("door_nokeyring", "0"))+", ")
+        fdoorsql.write(str(o.get("door_door_triggerdoor", "0"))+", ")
+        fdoorsql.write(str(o.get("door_door_triggertype", "0"))+", ")
+        fdoorsql.write(str(o.get("door_disable_timer", "0"))+", ")
+        fdoorsql.write(str(o.get("door_doorisopen", "0"))+", ")
+        fdoorsql.write(str(o.get("door_param", "0"))+", ")
+        fdoorsql.write("'"+str(o.get("door_dest_zone", "NONE"))+"', ")
+        fdoorsql.write(str(o.get("door_dest_instance", "0"))+", ")
+        fdoorsql.write(str(o.get("door_dest_x", "0"))+", ")
+        fdoorsql.write(str(o.get("door_dest_y", "0"))+", ")
+        fdoorsql.write(str(o.get("door_dest_z", "0"))+", ")
+        fdoorsql.write(str(o.get("door_dest_heading", "0"))+", ")
+        fdoorsql.write(str(o.get("door_invert_state", "0"))+", ")
+        fdoorsql.write(str(o.get("door_incline", "0"))+", ")
+        fdoorsql.write(str(o.get("door_size", "100"))+", ")
+        fdoorsql.write(str(o.get("door_buffer", "0"))+", ")
+        fdoorsql.write(str(o.get("door_client_version_mask", "4294967295"))+", ")
+        fdoorsql.write(str(o.get("door_is_ldon_door", "0"))+", ")
+        fdoorsql.write(str(o.get("door_min_expansion", "0"))+", ")
+        fdoorsql.write(str(o.get("door_max_expansion", "0"))+")")
+
+    else:
+        fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(o.rotation_euler.x) + " " + roundFloatStr(o.rotation_euler.y) + " " + roundFloatStr(o.rotation_euler.z) + " " + roundFloatStr(o.scale.z) + "\n")
     if isExported:
         print(col.name+" is already exported, only adding placement instance data")
         for co in col.objects:
@@ -254,6 +298,10 @@ for o in bpy.data.objects:
         co.select_set(True)
     bpy.ops.export_scene.obj(filepath=obj_file, check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=True, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
     bpy.data.objects.remove(o, do_unlink=True)
+
+
+if fdoorsql.IsCreated():
+    fdoorsql.write(";\n")
 
 print("Step 6) Processing zone objects...")
 bpy.ops.object.select_all(action='DESELECT')

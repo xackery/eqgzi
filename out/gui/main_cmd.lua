@@ -155,6 +155,39 @@ function obj_import(shortname)
 		end
 		log_write("Added " .. #models .. " models, " .. #objects .. " objects based on " .. shortname .. "_mod.txt")
 	end
+
+	local f = io.open("cache/" ..shortname .. "_doors.txt", "rb")
+	if f then
+		local doorCount = 0
+		f:close()
+		local lineNumber = 0
+		for line in io.lines("cache/" ..shortname .. "_doors.txt") do
+			lineNumber = lineNumber + 1
+			lines = Split(line, " ")
+			if not #lines == 2 then
+				error("expected 2 entries, got " .. #lines)
+			end
+
+			local modelName = string.gsub(lines[1], ".obj", ".mod")
+				
+			local modelIndex = -1
+			for i = 1, #models do
+				if models[i] == modelName then
+					modelIndex = i
+				end
+			end
+			if modelIndex == -1 then				
+				table.insert(models, modelName)
+				modelIndex = #models
+				doorCount = doorCount + 1
+				-- log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)				
+			end
+
+			-- log_write("Found " .. lines[1] .. " as index " .. modelIndex)
+			
+		end
+		log_write("Added " .. doorCount .. " door based on " .. shortname .. "_doors.txt")
+	end
 	
 	local ter_data = obj.Import(obj_path, dir, true, shortname)
 
