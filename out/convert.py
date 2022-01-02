@@ -59,7 +59,10 @@ def roundFloatStr(value):
 
 blend_file_path = bpy.data.filepath
 directory = os.path.dirname(blend_file_path)
-base_name = os.path.basename(blend_file_path).rstrip(".blend")
+
+base_name = os.path.basename(blend_file_path)
+if base_name.find(".blend") != -1:
+    base_name = base_name.replace(".blend", "")
 out_path = directory + "/out"
 cache_path = directory + "/cache"
 sql_path = directory + "/sql"
@@ -205,7 +208,6 @@ def process(name, location, o):
             fr.write(name.replace(" ", "-") + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
 
 print("Step 2) Applying modifiers...")
-bpy.ops.object.mode_set(mode = 'OBJECT')
 for o in bpy.data.objects:
     if not o.visible_get(view_layer=bpy.context.view_layer):
         continue
@@ -213,6 +215,7 @@ for o in bpy.data.objects:
     for mod in o.modifiers:
         print("applying modifier " + mod.name + " for " + o.name)
         bpy.ops.object.modifier_apply(modifier=mod.name)
+bpy.ops.object.mode_set(mode = 'OBJECT')
 
 print("Step 3) Writing material properties...")
 for m in bpy.data.materials:
