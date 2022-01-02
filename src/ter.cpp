@@ -11,7 +11,16 @@ namespace TER
 		uint32 pos = Header::SIZE;
 
 
+		// TODO: add version 3 support  && header->version != 3
 		if (header->version != 2) {
+			// TODO: version 4 support
+			/*
+			byte* ptr = Util::CheckHeader(L, "EQGTZP", ".ter");
+			Header* header = (Header*)ptr;
+			uint32 pos = Header::SIZE;
+			*/
+			
+			
 			char msg[1024];
 			snprintf(msg, 1024, "unsupported .ter version %d, wanted 2", header->version);
 			return luaL_argerror(L, 1, msg);

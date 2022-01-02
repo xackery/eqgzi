@@ -10,6 +10,7 @@ namespace ZON
 		Header* header = (Header*)ptr;
 		uint32 pos = Header::SIZE;
 
+		// TODO: Add version 2 support header->version != 2
 		if (header->version != 1)
 			return luaL_argerror(L, 1, "unsupported .zon version");
 
@@ -18,6 +19,13 @@ namespace ZON
 		const char* string_block = (const char*)&ptr[pos];
 		pos += header->strings_len;
 
+
+		// TODO: Remove line, debugging
+		/*
+		char msg[1024];
+		snprintf(msg, 1024, "model count: %d", header->model_count);
+		return luaL_argerror(L, 1, msg);
+		*/
 		//model identifiers
 		lua_createtable(L, header->model_count, 0);
 
@@ -33,8 +41,12 @@ namespace ZON
 
 		lua_setfield(L, -2, "models");
 
+
 		//objects/placeables
 		lua_createtable(L, header->object_count, 0);
+
+
+
 
 		for (uint32 i = 1; i <= header->object_count; ++i)
 		{

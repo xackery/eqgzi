@@ -1,6 +1,7 @@
 import bpy
 import os
 import shutil
+from math import pi
 
 from bpy.types import ViewLayer
 
@@ -45,14 +46,24 @@ class Writer:
             if self.path.endswith("_doors.sql"):
                 self.w.write("DELETE FROM doors WHERE zone = '"+base_name+"';\n")
                 self.w.write("INSERT INTO doors (doorid, zone, `name`, pos_x, pos_y, pos_z, heading, opentype, guild, lockpick, keyitem, nokeyring, triggerdoor, triggertype, disable_timer, doorisopen, door_param, dest_zone, dest_instance, dest_x, dest_y, dest_z, dest_heading, invert_state, incline, size, buffer, client_version_mask, is_ldon_door, min_expansion, max_expansion) VALUES\n")
+            if self.path.endswith("_object.sql"):
+                self.w.write("DELETE FROM object WHERE zoneid = "+zoneid+";\n")
+                self.w.write("INSERT INTO object (zoneid, `version`, xpos, ypos, zpos, heading, itemid, charges, objectname, `type`, icon, unknown08, unknown10, unknown20, unknown24, unknown60, unknown64, unknown68, unknown72, unknown76, unknown84, size, tilt_x, tilt_y, min_expansion, max_expansion) VALUES\n")
         self.w.write(text)
-    
+
+def eulerToHeading(value):
+    return round(180/pi*value/360*512)
+
+def roundFloatStr(value):
+    return str(round(value, 4))
+
 blend_file_path = bpy.data.filepath
 directory = os.path.dirname(blend_file_path)
 base_name = os.path.basename(blend_file_path).removesuffix(".blend")
 out_path = directory + "/out"
 cache_path = directory + "/cache"
 sql_path = directory + "/sql"
+zoneid = "32"
 
 fe = Writer(out_path + "/" + base_name + "_EnvironmentEmitters.txt")
 fsnd = Writer(out_path + "/" + base_name + ".emt")
@@ -64,6 +75,8 @@ fsg = Writer(sql_path + "/" + base_name + "_spawngroup_sql")
 fs2 = Writer(sql_path + "/" + base_name + "_spawn2.sql")
 fdoor = Writer(cache_path + "/" + base_name + "_doors.txt")
 fdoorsql = Writer(sql_path + "/" + base_name + "_doors.sql")
+fobjectsql = Writer(sql_path + "/" + base_name + "_object.sql")
+
 
 print("Step 1) Deleting cache / out paths...")
 # Delete contents of out path
@@ -87,8 +100,6 @@ for f in os.listdir(cache_path):
 
 modDefs = {}
 
-def roundFloatStr(value):
-    return str(round(value, 4))
 
 def process(name, location, o):
     # check for any emitter definitions, any object can contain them
@@ -116,6 +127,34 @@ def process(name, location, o):
         fsnd.write(str(o.get("sound_xmi_index", "0"))+",")
         fsnd.write(str(o.get("sound_echo", "0"))+",")
         fsnd.write(str(o.get("sound_env_toggle", "1"))+"\n")
+    if o.get("object_objectname", 0) != 0:
+        print("writing out object "+str(o.get("object_objectname", "0"))+" from object "+name)
+        if fobjectsql.IsCreated():
+            fobjectsql.write(", \n")
+        fobjectsql.write("("+str(o.get("object_zoneid", zoneid))+", ")
+        fobjectsql.write(str(o.get("object_version", "0"))+", ")
+        fobjectsql.write(roundFloatStr(-o.location.y*2) + ", " + roundFloatStr(o.location.x*2) + ", " + roundFloatStr(o.location.z*2)+", ")
+        fobjectsql.write(str(eulerToHeading(o.rotation_euler.z))+", ") # heading
+        fobjectsql.write(str(o.get("object_itemid", "0"))+", ")
+        fobjectsql.write(str(o.get("object_charges", "0"))+", ")
+        fobjectsql.write("'"+str(o.get("object_objectname", "0"))+"', ")
+        fobjectsql.write(str(o.get("object_type", "0"))+", ")
+        fobjectsql.write(str(o.get("object_icon", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown08", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown10", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown20", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown24", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown60", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown64", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown68", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown72", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown76", "0"))+", ")
+        fobjectsql.write(str(o.get("object_unknown84", "0"))+", ")
+        fobjectsql.write(str(o.get("object_size", "100"))+", ")
+        fobjectsql.write(str(o.get("object_tilt_x", "0"))+", ")
+        fobjectsql.write(str(o.get("object_tilt_y", "0"))+", ")
+        fobjectsql.write(str(o.get("object_min_expansion", "0"))+", ")
+        fobjectsql.write(str(o.get("object_max_expansion", "0"))+")")
     
     if o.get("spawngroup_id", "0") != "0":
         id = o.get("spawn2_id", 0)
@@ -149,7 +188,7 @@ def process(name, location, o):
         fs2.write("REPLACE INTO spawn2 (id, spawngroupid, x, y, z, heading, respawntime, variance, pathgrid, version) VALUES(")
         fs2.write(str(o.get("spawn2_id", "0")) + ", " +str(o.get("spawn2_spawngroupid", "0"))+ ", ")
         fs2.write(str(location.x*2)+", "+str(location.y*2)+", "+str(location.z*2)+", ")
-        fs2.write(str(o.rotation_euler.z)+ ", "+str(o.get("spawn2_respawntime", "0"))+ ", ")
+        fs2.write(str(eulerToHeading(o.rotation_euler.z))+ ", "+str(o.get("spawn2_respawntime", "0"))+ ", ")
         fs2.write(str(o.get("spawn2_variance", "0"))+ ", "+str(o.get("spawn2_pathgrid", "0"))+", ")
         fs2.write(str(o.get("spawn2_version", "0"))+");\n")
 
@@ -253,9 +292,10 @@ for o in bpy.data.objects:
             fdoorsql.write(", \n")
         fdoorsql.write("(" + str(o.get("door_id", "0"))+", ")
         fdoorsql.write("'"+base_name+"', ")
-        fdoorsql.write("'"+o.name.replace(" ", "-")+"', ")
-        fdoorsql.write(roundFloatStr(-o.location.y*2) + ", " + roundFloatStr(o.location.x*2) + ", " + roundFloatStr(o.location.z*2)+", ")
-        fdoorsql.write(roundFloatStr(o.rotation_euler.z)+", ") # heading
+        fdoorsql.write("'"+objName.replace(" ", "-").replace(".obj", "").upper()+"', ")
+        fdoorsql.write(roundFloatStr(o.location.x*2) + ", " + roundFloatStr(-o.location.y*2) + ", " + roundFloatStr(o.location.z*2)+", ")
+        
+        fdoorsql.write(str(eulerToHeading(o.rotation_euler.z))+", ") # heading
         fdoorsql.write(str(o.get("door_opentype", "0"))+", ")
         fdoorsql.write(str(o.get("door_guild", "0"))+", ")
         fdoorsql.write(str(o.get("door_lockpick", "0"))+", ")
@@ -282,7 +322,7 @@ for o in bpy.data.objects:
         fdoorsql.write(str(o.get("door_max_expansion", "0"))+")")
 
     else:
-        fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(o.rotation_euler.x) + " " + roundFloatStr(o.rotation_euler.y) + " " + roundFloatStr(o.rotation_euler.z) + " " + roundFloatStr(o.scale.z) + "\n")
+        fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(eulerToHeading(o.rotation_euler.x)) + " " + roundFloatStr(eulerToHeading(o.rotation_euler.y)) + " " + roundFloatStr(eulerToHeading(o.rotation_euler.z)) + " " + roundFloatStr(o.scale.z) + "\n")
     if isExported:
         print(col.name+" is already exported, only adding placement instance data")
         for co in col.objects:
@@ -311,6 +351,10 @@ for o in bpy.data.objects:
     if o.type != 'MESH':
         bpy.data.objects.remove(o, do_unlink=True)
         continue
+
+
+if fobjectsql.IsCreated():
+    fobjectsql.write(";\n")
 
 for sp in spawngroups:
     fsg.write("REPLACE INTO spawngroup (id, name, spawn_limit, dist, max_x, min_x, max_x, min_y, delay, mindelay, despawn, despawn_timer, wp_spawns) VALUES ("+str(spawngroups[sp].id)+", '"+str(spawngroups[sp].name)+"', "+str(spawngroups[sp].spawn_limit)+", "+str(spawngroups[sp].dist)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_x)+", "+str(spawngroups[sp].max_x)+", "+str(spawngroups[sp].min_y)+", "+str(spawngroups[sp].delay)+", "+str(spawngroups[sp].mindelay)+", "+str(spawngroups[sp].despawn)+", "+str(spawngroups[sp].despawn_timer)+", "+str(spawngroups[sp].wp_spawns)+");\n")

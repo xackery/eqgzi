@@ -1,3 +1,7 @@
+# 2022-01-02 v1.7
+- eqgzi: Added door support
+- 
+
 # 2021-12-31 v1.6
 - Created subfolder-based creation, e.g. cache/, sql/, and out/
 - convert.py: shader custom property is now fx
