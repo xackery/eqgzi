@@ -59,7 +59,7 @@ def roundFloatStr(value):
 
 blend_file_path = bpy.data.filepath
 directory = os.path.dirname(blend_file_path)
-base_name = os.path.basename(blend_file_path).removesuffix(".blend")
+base_name = os.path.basename(blend_file_path).rstrip(".blend")
 out_path = directory + "/out"
 cache_path = directory + "/cache"
 sql_path = directory + "/sql"
