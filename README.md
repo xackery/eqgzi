@@ -1,11 +1,7 @@
 EQEmu Zone Importer
 
 # TODO
-- Fix normals being defined inside a custom property, to properly inject the material into the eqg
-- Figure out regions and why extents don't properly align
-- Add environment emitters (zonename_environmentemitters.txt)
 - Add character references (zonename_chr.txt)
-- Add sound emitters (zonename.emt)
 
 # Changing Version Number
 - Search for `title = "EQG Zone Importer`

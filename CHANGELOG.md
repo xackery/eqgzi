@@ -1,6 +1,8 @@
 # 2022-01-02 v1.7
 - eqgzi: Added door support
-- 
+- convert.py: Adjusted how string manipulation is lower required python version
+- convert.py: Fixed how rotations are done, so doors properly rotate
+- convert.py: Fixed a bug with material parsing
 
 # 2021-12-31 v1.6
 - Created subfolder-based creation, e.g. cache/, sql/, and out/
