@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 		return 0;
 	}
-	ShowError("usage: eqgzi import \".eqg\" \".obj\"", "");
+	ShowError("usage: eqgzi import <zone>", "");
 	return 1;
 #endif
 	if (luaL_loadfile(L, "gui/main.lua") != 0)
