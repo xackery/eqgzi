@@ -325,7 +325,7 @@ for o in bpy.data.objects:
         fdoorsql.write(str(o.get("door_max_expansion", "0"))+")")
 
     else:
-        fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(eulerToHeading(o.rotation_euler.x)) + " " + roundFloatStr(eulerToHeading(o.rotation_euler.y)) + " " + roundFloatStr(eulerToHeading(o.rotation_euler.z)) + " " + roundFloatStr(o.scale.z) + "\n")
+        fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(-o.location.y*2) + " " + roundFloatStr(o.location.x*2) + " " + roundFloatStr(o.location.z*2) + " "  + roundFloatStr(o.rotation_euler.x) + " " + roundFloatStr(o.rotation_euler.y) + " " + roundFloatStr(o.rotation_euler.z) + " " + roundFloatStr(o.scale.z) + "\n")
     if isExported:
         print(col.name+" is already exported, only adding placement instance data")
         for co in col.objects:

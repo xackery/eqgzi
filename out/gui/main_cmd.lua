@@ -149,7 +149,7 @@ function obj_import(shortname)
 			table.insert(objects, {name = lines[2],
 				id = modelIndex-1,
 				x = lines[3], y = lines[4], z = lines[5],
-				rotation_x = lines[6], rotation_y = lines[7], rotation_z = lines[8],
+				rotation_x = lines[8], rotation_y = lines[7], rotation_z = lines[6],
 				scale = lines[9],
 			})
 		end
@@ -213,20 +213,6 @@ function obj_import(shortname)
 	dir[pos] = ter_ent
 
 
-	local zon_name = shortname .. ".zon"
-	pos = #dir+1
-	log_write("zon pos: "..pos)
-	dir[pos] = {pos = pos, name = zon_name}
-	by_name[zon_name] = dir[pos]
-	
-	local s, zon_ent = pcall(zon.Write, zon_data, zon_name, eqg.CalcCRC(zon_name))
-	if not s then
-		error("zon.write " .. zon_name .. " failed: " .. zon_ent)
-	end
-
-	zon_ent.pos = pos
-	dir[pos] = zon_ent
-
 	for i = 2, #models do
 		
 		pos = #dir + 1
@@ -234,7 +220,7 @@ function obj_import(shortname)
 		local modelBaseName = string.gsub(models[i], ".mod", "")
 		local modelName = models[i]
 
-		--dir[pos] = {pos = pos, name = modelName .. ".mod"}
+		dir[pos] = {pos = pos, name = modelName .. ".mod"}
 		--by_name[modelName .. ".mod"] = dir[pos]
 
 		log_write("Attempting to save '" .. modelName .. "' as '" .. modelName)
@@ -250,6 +236,21 @@ function obj_import(shortname)
 		mod_data.pos = pos
 		dir[pos] = mod_data
 	end
+
+	local zon_name = shortname .. ".zon"
+	pos = #dir+1
+	--log_write("zon pos: "..pos)
+	dir[pos] = {pos = pos, name = zon_name}
+	by_name[zon_name] = dir[pos]
+	
+	local s, zon_ent = pcall(zon.Write, zon_data, zon_name, eqg.CalcCRC(zon_name))
+	if not s then
+		error("zon.write " .. zon_name .. " failed: " .. zon_ent)
+	end
+
+	zon_ent.pos = pos
+	dir[pos] = zon_ent
+
 
 	DirNames(dir)
 

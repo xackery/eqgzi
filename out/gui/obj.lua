@@ -284,6 +284,7 @@ function obj.Import(path, dir, appending, shortname)
 				if util.IsConsole() then log_write("Find file '" .. name .. "' failed with error: " .. err) end
 				return
 			end
+			--log_write("found " .. name .. " at " .. mat_path)
 			dir[pos].pos = pos
 		end
 
