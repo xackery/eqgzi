@@ -1,3 +1,6 @@
+#2022-01-08 v1.7.1
+- eqgzi: fixed model placement data to properly put models rotation
+
 # 2022-01-02 v1.7
 - eqgzi: Added door support
 - convert.py: Adjusted how string manipulation is lower required python version

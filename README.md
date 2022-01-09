@@ -6,6 +6,7 @@ EQEmu Zone Importer
 # Changing Version Number
 - Search for `title = "EQG Zone Importer`
 - Search for `Exported by EQG Zone Importer`
+- Search for `executing eqgzi`
 - Ensure CHANGELOG.md has an entry for new version
 
 # Usage
@@ -120,3 +121,6 @@ cavetorch00^7^-232.960953^3869.141846^137.998978^9999999
 
 entry 00 is OBJ_walltorchsm20
 
+
+
+10x
