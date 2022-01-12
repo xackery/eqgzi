@@ -343,6 +343,11 @@ function obj.Import(path, dir, appending, shortname)
 				--log_write("Material " .. mat_name .. " had second diffuse map '" .. name .. "' listed")
 				load_img(name)
 			end
+			name = mat.e_TextureDiffuse1
+            if name then
+                --log_write("Material " .. mat_name .. " had second diffuse map '" .. name .. "' listed")
+                load_img(name)
+            end
 		end
 		
 	--local pos = append_pos
