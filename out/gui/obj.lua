@@ -412,7 +412,7 @@ function obj.Export()
 		end
 
 		local f = assert(io.open(folder .. zonename .. ".mtl", "w+"))
-		f:write("# Exported by EQG Zone Importer v1.7.1\n\n")
+		f:write("# Exported by EQG Zone Importer v1.8.0\n\n")
 		for i, mat in ipairs(materials) do
 			f:write("newmtl ", mat.name, "\n")
 			f:write("Ka 1.000000 1.000000 1.000000\nKd 1.000000 1.000000 1.000000\nd 1.000000\nillum 2\n")
@@ -431,7 +431,7 @@ function obj.Export()
 		f:close()
 
 		f = assert(io.open(folder .. zonename .. ".obj", "w+"))
-		f:write("# Exported by EQG Zone Importer v1.7.1\n")
+		f:write("# Exported by EQG Zone Importer v1.8.0\n")
 		f:write("mtllib ", zonename, ".mtl\no ", zonename, "\n")
 
 		if vertices.binary then
