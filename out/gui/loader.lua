@@ -6,15 +6,17 @@ by_name = {}
 
 function DirNames(dir)
 	
---	log_write("dir size: " .. #dir .. ", by_name size: " .. #by_name)
+	--log_write("dir size: " .. #dir .. ", by_name size: " .. #by_name)
 
+	--for i, ent in pairs(dir) do
+	--	log_write("pair " .. i .. " is " .. ent.name)
+	--end
 	by_name = {}
 	for i, ent in ipairs(dir) do
-		-- log_write("pair " .. i .. " is " .. ent.name)
+		 --log_write("ipair " .. i .. " is " .. ent.name)
 		-- log_write(" at " .. ent.pos)
-		--log_write(" crc " .. ent.crc)
 		if ent.crc then
-			--log_write(" crc " .. ent.crc)
+		--	log_write(" crc " .. ent.crc)
 		end
 
 		ent.pos = i

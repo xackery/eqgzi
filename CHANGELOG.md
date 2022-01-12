@@ -1,4 +1,7 @@
-#2022-01-08 v1.7.1
+# 2022-01-11 v1.8.0
+- eqgzi: added animation support
+
+# 2022-01-08 v1.7.1
 - eqgzi: fixed model placement data to properly put models rotation
 
 # 2022-01-02 v1.7

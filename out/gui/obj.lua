@@ -265,7 +265,7 @@ function obj.Import(path, dir, appending, shortname)
 		local append_pos = (#dir + 1)
 		local load_img = function(name)
 			local mat_path = folder .. name
-			-- log_write("Attempting to find file '" .. name .. "' at '" .. mat_path .. "'")
+			log_write("load_img " .. name .. " looking at " .. mat_path)
 			name = name:lower()
 			local pos
 			for i, ent in ipairs(dir) do
@@ -281,38 +281,83 @@ function obj.Import(path, dir, appending, shortname)
 			local s, err = pcall(eqg.ImportFlippedImage, mat_path, name, dir, pos)
 			if not s then
 				if not util.IsConsole() then error(err) end
-				if util.IsConsole() then log_write("Find file '" .. name .. "' failed with error: " .. err) end
+				if util.IsConsole() then log_write("load_img " .. name .. " failed: " .. err) end
 				return
 			end
 			--log_write("found " .. name .. " at " .. mat_path)
 			dir[pos].pos = pos
 		end
 
+		local anim_img_func = function(name)
+			name = string.gsub(name, ".dds", "")
+
+			local txt_path = "cache/"..name..".txt"
+			local fmanim = io.open(txt_path, "rb")
+			if fmanim then
+				fmanim:close()
+				local lineNumber = 0
+				for line in io.lines(txt_path) do
+					lineNumber = lineNumber + 1
+					lines = Split(line, " ")
+
+					if string.find(line:lower(), ".dds$") then
+						--log_write("Material " .. name .. " had animation ref to '" .. line .. "' listed")
+						load_img(line)
+					end
+				end
+				local pos = append_pos
+				append_pos = append_pos + 1
+				-- dir[pos] = {pos = pos, name = name..".txt", crc = eqg.CalcCRC(name)}
+				local s, err = pcall(eqg.ImportFile, txt_path, name..".txt", dir, pos)
+				if not s then
+					if not util.IsConsole() then error(err) end
+					if util.IsConsole() then log_write("anim_img " .. name .. ".txt failed: " .. err) end
+					return
+				end
+				log_write("found " .. name .. ".txt at " .. txt_path)
+				by_name[name..".txt"] = dir[pos]
+			end
+		end
+
 		for mat_name, mat in pairs(mat_src) do
 			--log_write("Searching for images to import for material '" .. mat_name .. "'")
 			local name = mat.diffuse_map
 			if name then
-				log_write("Material " .. mat_name .. " had diffuse map '" .. name .. "' listed")
+				--log_write(mat_name .. ": loading diffuse map " .. name)
 				load_img(name)
+				anim_img_func(name)			
 			end
+
 			name = mat.e_TextureNormal0
 			if name then
-				log_write("Material " .. mat_name .. " had normal map '" .. name .. "' listed")
+				--log_write("Material " .. mat_name .. " had normal map '" .. name .. "' listed")
 				load_img(name)
 			end
 			name = mat.e_TextureEnvironment0
 			if name then
-				log_write("Material " .. mat_name .. " had environment map '" .. name .. "' listed")
+				--log_write("Material " .. mat_name .. " had environment map '" .. name .. "' listed")
 				load_img(name)
 			end
 			name = mat.e_TextureSecond0
 			if name then
-				log_write("Material " .. mat_name .. " had second diffuse map '" .. name .. "' listed")
+				--log_write("Material " .. mat_name .. " had second diffuse map '" .. name .. "' listed")
 				load_img(name)
 			end
 		end
+		
+	--local pos = append_pos
+	--append_pos = append_pos + 1
+	-- dir[pos] = {pos = pos, name = name..".txt", crc = eqg.CalcCRC(name)}
+	--local s, err = pcall(eqg.ImportFile, "cache/test.txt", "test.txt", dir, pos)
+	--if not s then
+--		if not util.IsConsole() then error(err) end
+		--if util.IsConsole() then log_write("anim_img " .. name .. ".txt failed: " .. err) end
+		--return
+	--end
+
 	end
 
+	
 	if not util.IsConsole()	then 
 		progress:hide()
 		iup.Destroy(progress)

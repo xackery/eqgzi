@@ -224,7 +224,31 @@ for m in bpy.data.materials:
         print("tree " +tree)
         for node in tree:
             print(node.name)
-
+    if not m.node_tree:
+        continue
+    if not m.node_tree.nodes['Image Texture']:
+        continue
+    if not m.node_tree.nodes['Image Texture'].image:
+        continue
+    name = m.node_tree.nodes['Image Texture'].image.name
+    if name.find("."):
+        name = name[0:name.find(".")]
+    if os.path.isfile(name + ".txt"):
+        mats = open(name + ".txt")
+        lines = mats.readlines()
+        for line in lines:
+            if line.find(".dds") == -1:
+                continue
+            line = line.replace("\n", "")
+            if not os.path.isfile(directory+"/"+line):
+                print(name+".txt: could not find animated texture " +directory+"/"+line)
+                exit(1)
+                continue
+            print(name+".txt: copying animated texture to cache: "+line)
+            shutil.copyfile(line, "cache/"+line)
+        shutil.copyfile(name+".txt", "cache/"+name+".txt")
+        
+            
     for prop in m.items():
         for k in prop:
             if not isinstance(k, str):
