@@ -106,6 +106,11 @@ for f in os.listdir(cache_path):
 
 modDefs = {}
 
+def isImageFile(name):
+    for ext in {".dds", ".png", ".jpg"}:
+        if name.find(ext) != -1:
+            return True
+    return False
 
 def process(name, location, o):
     # check for any emitter definitions, any object can contain them
@@ -227,20 +232,17 @@ for m in bpy.data.materials:
         print("tree " +tree)
         for node in tree:
             print(node.name)
-    if not m.node_tree:
+    try:
+        name = m.node_tree.nodes['Image Texture'].image.name
+    except:
         continue
-    if not m.node_tree.nodes['Image Texture']:
-        continue
-    if not m.node_tree.nodes['Image Texture'].image:
-        continue
-    name = m.node_tree.nodes['Image Texture'].image.name
     if name.find("."):
         name = name[0:name.find(".")]
     if os.path.isfile(name + ".txt"):
         mats = open(name + ".txt")
         lines = mats.readlines()
         for line in lines:
-            if line.find(".dds") == -1:
+            if not isImageFile(line):
                 continue
             line = line.replace("\n", "")
             if not os.path.isfile(directory+"/"+line):
@@ -256,19 +258,20 @@ for m in bpy.data.materials:
         for k in prop:
             if not isinstance(k, str):
                 continue
-            if k.startswith("e_"):
-                eValue = str(m[k])
-                if eValue.find(" ") == -1:
-                    eValue = "0 "+eValue                
-                fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
-                for entry in eValue.split(" "):
-                    if entry.find(".dds") == -1:
-                        continue                
-                    if not os.path.exists(entry):
-                        print("failed to find "+entry+" in current path, defined on material "+m.name)
-                        exit(1)
-                    print("copying "+entry+" to cache")
-                    shutil.copyfile(entry, "cache/"+entry)
+            if not k.startswith("e_"):
+                continue
+            eValue = str(m[k])
+            if eValue.find(" ") == -1:
+                eValue = "0 "+eValue                
+            fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
+            for entry in eValue.split(" "):
+                if not isImageFile(entry):
+                    continue
+                if not os.path.exists(entry):
+                    print("failed to find "+entry+" in current path, defined on material "+m.name)
+                    exit(1)
+                print("copying "+entry+" to cache")
+                shutil.copyfile(entry, "cache/"+entry)
 
 
 
