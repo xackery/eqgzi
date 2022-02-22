@@ -131,12 +131,26 @@ function obj.Import(path, dir, appending, shortname)
 				if not #lines == 5 and not #lines == 4 then
 					error("failed to parse " .. shortname .. "_material.txt:" .. lineNumber .. " due to number of entries should be 4 or 5, got " .. #lines)
 				end
-				if #lines == 5 then
-					material_flags[lines[2]][lines[3]] = lines[4] .. " " .. lines[5]
+				if #lines >= 4 then
+					
+					local value = ""
+					for n, line in pairs(lines) do
+						print(n .. ", " .. line)
+						if n >= 4 then
+							if n == 4 then
+								value = value .. line
+							else
+								value = value .. " " .. line
+							end							
+						end
+					end				
+
+					material_flags[lines[2]][lines[3]] = value
+					print("final value: " .. material_flags[lines[2]][lines[3]])
 				end
-				if #lines == 4 then
-					material_flags[lines[2]][lines[3]] = lines[4]
-				end
+				--if #lines == 4 then
+				--	material_flags[lines[2]][lines[3]] = lines[4]
+				--end
 			end
 		end
 		log_write("Added " .. #material_flags .. " flags based on " .. shortname .. "_material.txt")
