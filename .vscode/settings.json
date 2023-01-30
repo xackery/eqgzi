@@ -1,3 +1,10 @@
 {
-    "window.title": "eqgzi"
+    "window.title": "eqgzi",
+    "Lua.runtime.version": "Lua 5.1",
+    "Lua.workspace.library": [
+        "eqgzi-definitions"
+    ],
+    "Lua.diagnostics.disable": [
+        "lowercase-global"
+    ],
 }
