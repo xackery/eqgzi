@@ -7,6 +7,7 @@
 #include <unistd.h>         // readlink
 #include <linux/limits.h>   // PATH_MAX
 #endif
+#include <string>
 
 namespace Util
 {

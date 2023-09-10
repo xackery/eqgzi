@@ -1,3 +1,12 @@
+# 2023-09-10 v1.8.2
+- eqgzi: Fixed a bug where if in edit mode and exporting it will crash if any modifiers
+- eqgzi: Repaired some spawngroup logic, more improvements will come soon
+- eqgzi: Fixed some bugs with different file types not being detected for textures
+- eqgzi: Added new bool checks on process to ensure only valid zone meshes are exported
+- eqgzi: Downgraded eqgzi.exe and eqgzi-gui.exe to v140 (VS2015) and Win10 10.0.22000.0 requirements
+
+# 2023-01-29 v1.8.1
+- eqgzi: Added arg passing to allow eqgzi-manager to call a zone
 # 2022-01-11 v1.8.0
 - eqgzi: added animation support
 - eqgzi: added fix for diffuse1 material parsing

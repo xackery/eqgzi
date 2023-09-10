@@ -12,10 +12,9 @@ class NpcType:
 npcs = []
 
 class SpawnGroup:
-    def __init__(self, id, spawngroupid):
-        self.id = 0
-        self.name = ""
-        self.spawngroupid = 0
+    def __init__(self, id):
+        self.id = id
+        self.name = ""        
         self.spawn_limit = 0
         self.dist = 0
         self.max_x = 0
@@ -58,7 +57,7 @@ def roundFloatStr(value):
     return str(round(value, 4))
 
 
-print("eqgzi v1.8.0 converter")
+print("eqgzi v1.8.2 converter")
 
 blend_file_path = bpy.data.filepath
 directory = os.path.dirname(blend_file_path)
@@ -112,7 +111,7 @@ def isImageFile(name):
             return True
     return False
 
-def process(name, location, o):
+def process(name, location, o) -> bool:
     # check for any emitter definitions, any object can contain them
     if o.get("emit_id", 0) != 0:
         print("writing out emit_id "+str(o.get("emit_id", "1"))+" from object "+ name)
@@ -169,9 +168,9 @@ def process(name, location, o):
     
     if o.get("spawngroup_id", "0") != "0":
         id = o.get("spawn2_id", 0)
-        spawngroupid = o.get("spawngroupid", 0)
+        spawngroupid = o.get("spawngroup_id", 0)
         if not spawngroupid in spawngroups:
-            spawngroups[spawngroupid] = SpawnGroup(id, spawngroupid)
+            spawngroups[spawngroupid] = SpawnGroup(spawngroupid)
         if o.get("spawngroup_name", "0") != "0":
             spawngroups[spawngroupid].name = o["spawngroup_name"]
         if o.get("spawngroup_spawn_limit", "0") != "0":
@@ -197,11 +196,12 @@ def process(name, location, o):
         if o.get("spawngroup_wp_spawns", "0") != "0":
             spawngroups[spawngroupid].dist = o["spawngroup_wp_spawns"]
         fs2.write("REPLACE INTO spawn2 (id, spawngroupid, x, y, z, heading, respawntime, variance, pathgrid, version) VALUES(")
-        fs2.write(str(o.get("spawn2_id", "0")) + ", " +str(o.get("spawn2_spawngroupid", "0"))+ ", ")
+        fs2.write(str(o.get("spawn2_id", "0")) + ", " +str(o.get("spawngroup_id", "0"))+ ", ")
         fs2.write(str(location.x*2)+", "+str(location.y*2)+", "+str(location.z*2)+", ")
         fs2.write(str(eulerToHeading(o.rotation_euler.z))+ ", "+str(o.get("spawn2_respawntime", "0"))+ ", ")
         fs2.write(str(o.get("spawn2_variance", "0"))+ ", "+str(o.get("spawn2_pathgrid", "0"))+", ")
-        fs2.write(str(o.get("spawn2_version", "0"))+");\n")
+        fs2.write(str(o.get("spawn2_version", "0"))+");\n")        
+        return False
 
     if o.type == 'LIGHT':
         li = o.data
@@ -210,12 +210,18 @@ def process(name, location, o):
             if not lightName.startswith("LIB_") and not lightName.startswith("LIT_"):
                 lightName = "LIB_" + lightName
             fl.write(lightName + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
+        return False
 
     if o.type == 'EMPTY':
         if o.empty_display_type == 'CUBE':
             fr.write(name.replace(" ", "-") + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
+        return False
+    return True
 
 print("Step 2) Applying modifiers...")
+# if not in object mode
+if bpy.context.mode != 'OBJECT':
+    bpy.ops.object.mode_set(mode = 'OBJECT')
 for o in bpy.data.objects:
     if not o.visible_get(view_layer=bpy.context.view_layer):
         continue
@@ -232,10 +238,13 @@ for m in bpy.data.materials:
         print("tree " +tree)
         for node in tree:
             print(node.name)
-    try:
-        name = m.node_tree.nodes['Image Texture'].image.name
-    except:
+    if not m.node_tree:
         continue
+    if not m.node_tree.nodes['Image Texture']:
+        continue
+    if not m.node_tree.nodes['Image Texture'].image:
+        continue
+    name = m.node_tree.nodes['Image Texture'].image.name
     if name.find("."):
         name = name[0:name.find(".")]
     if os.path.isfile(name + ".txt"):
@@ -258,20 +267,19 @@ for m in bpy.data.materials:
         for k in prop:
             if not isinstance(k, str):
                 continue
-            if not k.startswith("e_"):
-                continue
-            eValue = str(m[k])
-            if eValue.find(" ") == -1:
-                eValue = "0 "+eValue                
-            fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
-            for entry in eValue.split(" "):
-                if not isImageFile(entry):
-                    continue
-                if not os.path.exists(entry):
-                    print("failed to find "+entry+" in current path, defined on material "+m.name)
-                    exit(1)
-                print("copying "+entry+" to cache")
-                shutil.copyfile(entry, "cache/"+entry)
+            if k.startswith("e_"):
+                eValue = str(m[k])
+                if eValue.find(" ") == -1:
+                    eValue = "0 "+eValue                
+                fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
+                for entry in eValue.split(" "):
+                    if entry.find(".dds") == -1:
+                        continue                
+                    if not os.path.exists(entry):
+                        print("failed to find "+entry+" in current path, defined on material "+m.name)
+                        exit(1)
+                    print("copying "+entry+" to cache")
+                    shutil.copyfile(entry, "cache/"+entry)
 
 
 
@@ -380,7 +388,9 @@ print("Step 6) Processing zone objects...")
 bpy.ops.object.select_all(action='DESELECT')
 for o in bpy.data.objects:
     print(o.name + " processing (" + o.type + ")")
-    process(o.name, o.location, o)
+    if not process(o.name, o.location, o):
+        bpy.data.objects.remove(o, do_unlink=True)
+        continue
     if o.type != 'MESH':
         bpy.data.objects.remove(o, do_unlink=True)
         continue
