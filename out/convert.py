@@ -168,7 +168,13 @@ def process(name, location, o) -> bool:
     
     if o.get("spawngroup_id", "0") != "0":
         id = o.get("spawn2_id", 0)
+        if id == 0 and o.name.contains("_") and o.name.split("_")[1].isdigit():
+            id = o.name.split("_")[1]
+
         spawngroupid = o.get("spawngroup_id", 0)
+        if spawngroupid == 0:
+            print("Warning: spawngroup_id is 0 for object "+o.name)
+            return False
         if not spawngroupid in spawngroups:
             spawngroups[spawngroupid] = SpawnGroup(spawngroupid)
         if o.get("spawngroup_name", "0") != "0":
@@ -203,6 +209,21 @@ def process(name, location, o) -> bool:
         fs2.write(str(o.get("spawn2_version", "0"))+");\n")        
         return False
 
+    
+    if o.get("spawngroup_id", "0") != "0":
+        id = o.get("spawn2_id", 0)
+        if id == 0 and o.name.contains("_") and o.name.split("_")[1].isdigit():
+            id = o.name.split("_")[1]
+
+        spawngroupid = o.get("spawngroup_id", 0)
+        if spawngroupid == 0:
+            print("Warning: spawngroup_id is 0 for object "+o.name)
+            return False
+        if not spawngroupid in spawngroups:
+            spawngroups[spawngroupid] = SpawnGroup(spawngroupid)
+        if o.get("spawngroup_name", "0") != "0":
+            spawngroups[spawngroupid].name = o["spawngroup_name"]
+            
     if o.type == 'LIGHT':
         li = o.data
         if li.type == 'POINT':
@@ -215,6 +236,10 @@ def process(name, location, o) -> bool:
     if o.type == 'EMPTY':
         if o.empty_display_type == 'CUBE':
             fr.write(name.replace(" ", "-") + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
+        return False
+    
+    if o.name.endswith("_hide"):
+        print("Removing " + o.name + " from terrain export (hide suffix)")
         return False
     return True
 
