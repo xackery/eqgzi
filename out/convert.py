@@ -57,7 +57,7 @@ def roundFloatStr(value):
     return str(round(value, 4))
 
 
-print("eqgzi v1.8.2 converter")
+print("eqgzi v1.9.1 converter")
 
 blend_file_path = bpy.data.filepath
 directory = os.path.dirname(blend_file_path)

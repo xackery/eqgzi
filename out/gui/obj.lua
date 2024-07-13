@@ -105,7 +105,7 @@ function obj.Import(path, dir, appending, shortname)
 	end
 
 	local progress = iup.progressdlg{count = 0, totalcount = line_count, description = "Importing model..."}
-	if not util.IsConsole() then		
+	if not util.IsConsole() then
 		progress:show()
 	end
 
@@ -132,7 +132,7 @@ function obj.Import(path, dir, appending, shortname)
 					error("failed to parse " .. shortname .. "_material.txt:" .. lineNumber .. " due to number of entries should be 4 or 5, got " .. #lines)
 				end
 				if #lines >= 4 then
-					
+
 					local value = ""
 					for n, line in pairs(lines) do
 						print(n .. ", " .. line)
@@ -141,9 +141,9 @@ function obj.Import(path, dir, appending, shortname)
 								value = value .. line
 							else
 								value = value .. " " .. line
-							end							
+							end
 						end
-					end				
+					end
 
 					material_flags[lines[2]][lines[3]] = value
 					print("final value: " .. material_flags[lines[2]][lines[3]])
@@ -179,7 +179,7 @@ function obj.Import(path, dir, appending, shortname)
 					end
 				elseif cmd == "usemtl" then
 					cur_index = mat_index[args]
-					
+
 					last_material = material_flags[args]
 					if not last_material then
 						last_material = { flag = 65536, shader = "Opaque_MaxC1.fx"}
@@ -237,7 +237,7 @@ function obj.Import(path, dir, appending, shortname)
 				mat_src = ReadMTL(path:gsub("[^\\/]+%.%w+$", args))
 			end
 		end
-		if not util.IsConsole() then 
+		if not util.IsConsole() then
 			progress.inc = 1
 		end
 	end
@@ -250,7 +250,7 @@ function obj.Import(path, dir, appending, shortname)
 				if not #entries == 2 then
 					error("expected two values for " .. key .. ", got " .. #entries)
 				end
-				
+
 				log_write("flags ".. name .. " key "..key..": " .. entries[2])
 				if not mat_src[name] then
 					mat_src[name] = {}
@@ -270,9 +270,9 @@ function obj.Import(path, dir, appending, shortname)
 	data_file:write("\n")
 	data_file:close()
 
-	if mat_src then		
+	if mat_src then
 		local folder = path:match("^.+[\\/]")
-		if not folder then 
+		if not folder then
 			folder = "./"
 		end
 		log_write("Searching for texture files to import from directory '" .. folder .. "' (path: " .. path .. ")")
@@ -339,7 +339,7 @@ function obj.Import(path, dir, appending, shortname)
 			if name then
 				--log_write(mat_name .. ": loading diffuse map " .. name)
 				load_img(name)
-				anim_img_func(name)			
+				anim_img_func(name)
 			end
 
 			name = mat.e_TextureNormal0
@@ -363,7 +363,7 @@ function obj.Import(path, dir, appending, shortname)
                 load_img(name)
             end
 		end
-		
+
 	--local pos = append_pos
 	--append_pos = append_pos + 1
 	-- dir[pos] = {pos = pos, name = name..".txt", crc = eqg.CalcCRC(name)}
@@ -376,8 +376,8 @@ function obj.Import(path, dir, appending, shortname)
 
 	end
 
-	
-	if not util.IsConsole()	then 
+
+	if not util.IsConsole()	then
 		progress:hide()
 		iup.Destroy(progress)
 	end
@@ -426,7 +426,7 @@ function obj.Export()
 		end
 
 		local f = assert(io.open(folder .. zonename .. ".mtl", "w+"))
-		f:write("# Exported by EQG Zone Importer v1.8.2\n\n")
+		f:write("# Exported by EQG Zone Importer v1.9.1\n\n")
 		for i, mat in ipairs(materials) do
 			f:write("newmtl ", mat.name, "\n")
 			f:write("Ka 1.000000 1.000000 1.000000\nKd 1.000000 1.000000 1.000000\nd 1.000000\nillum 2\n")
@@ -445,7 +445,7 @@ function obj.Export()
 		f:close()
 
 		f = assert(io.open(folder .. zonename .. ".obj", "w+"))
-		f:write("# Exported by EQG Zone Importer v1.8.2\n")
+		f:write("# Exported by EQG Zone Importer v1.9.1\n")
 		f:write("mtllib ", zonename, ".mtl\no ", zonename, "\n")
 
 		if vertices.binary then

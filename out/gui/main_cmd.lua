@@ -46,7 +46,7 @@ function dump(o)
 function obj_import(shortname)
 	-- local shortname = eqg_path:match("([%s%w_]+)%.eqg$")
 	if not shortname then
-		error("obj_import: no shortname provided") 
+		error("obj_import: no shortname provided")
 	end
 
 	shortname = shortname:lower()
@@ -58,12 +58,12 @@ function obj_import(shortname)
 	if not s then
 		error("failed creating new EQG file: " .. dir)
 	end
-	
+
 	dir = {}
 	open_path = eqg_path
 	open_dir = dir
 	ter_name = shortname .. ".ter"
-	
+
 	pos = 1
 	dir[pos] = {pos = pos, name = shortname .. ".ter"}
 	by_name[shortname .. ".ter"] = dir[pos]
@@ -75,12 +75,12 @@ function obj_import(shortname)
 	--table.insert(lights, {name = "test", x = 1, y = 2, z = 3, r = 1, g = 2, b = 3, radius = 3})
 
 	local f = io.open("cache/" .. shortname .. "_light.txt", "rb")
-	if f then		
+	if f then
 		f:close()
 		local lineNumber = 0
 		for line in io.lines("cache/" .. shortname .. "_light.txt") do
 			lineNumber = lineNumber + 1
-			lines = Split(line, " ")			
+			lines = Split(line, " ")
 			if not #lines == 8 then
 				error("expected 8 entries, got " .. #lines)
 			end
@@ -92,10 +92,10 @@ function obj_import(shortname)
 		log_write("Added " .. #lights .. " lights based on out/" .. shortname .. "_light.txt")
 	end
 
-	
+
 	local regions = {}
 	local f = io.open("cache/" ..shortname .. "_region.txt", "rb")
-	if f then		
+	if f then
 		f:close()
 		local lineNumber = 0
 		for line in io.lines("cache/" ..shortname .. "_region.txt") do
@@ -105,7 +105,7 @@ function obj_import(shortname)
 				error("expected 10 entries, got " .. #lines)
 			end
 			-- log_write(#lines)
-			
+
 			table.insert(regions, {name = lines[1],
 			center_x = lines[2], center_y = lines[3], center_z = lines[4],
 			extent_x = lines[5], extent_y = lines[6], extent_z = lines[7],
@@ -130,7 +130,7 @@ function obj_import(shortname)
 			end
 
 			local modelName = string.gsub(lines[1], ".obj", ".mod")
-				
+
 			local modelIndex = -1
 			for i = 1, #models do
 				if models[i] == modelName then
@@ -138,10 +138,10 @@ function obj_import(shortname)
 				end
 			end
 			if modelIndex == -1 then
-				
+
 				table.insert(models, modelName)
 				modelIndex = #models
-				-- log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)				
+				-- log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)
 			end
 
 			-- log_write("Found " .. lines[1] .. " as index " .. modelIndex)
@@ -169,26 +169,26 @@ function obj_import(shortname)
 			end
 
 			local modelName = string.gsub(lines[1], ".obj", ".mod")
-				
+
 			local modelIndex = -1
 			for i = 1, #models do
 				if models[i] == modelName then
 					modelIndex = i
 				end
 			end
-			if modelIndex == -1 then				
+			if modelIndex == -1 then
 				table.insert(models, modelName)
 				modelIndex = #models
 				doorCount = doorCount + 1
-				-- log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)				
+				-- log_write("Inserted " .. lines[1] .. " as index " .. modelIndex)
 			end
 
 			-- log_write("Found " .. lines[1] .. " as index " .. modelIndex)
-			
+
 		end
 		log_write("Added " .. doorCount .. " door based on " .. shortname .. "_doors.txt")
 	end
-	
+
 	local ter_data = obj.Import(obj_path, dir, true, shortname)
 
 	local zon_data = {
@@ -203,7 +203,7 @@ function obj_import(shortname)
 	pos = 1
 	dir[pos] = {pos = pos, name = ter_name}
 	by_name[ter_name] = dir[pos]
-	
+
 	local s, ter_ent = pcall(ter.Write, ter_data, ter_name, eqg.CalcCRC(ter_name))
 	if not s then
 		error("ter.write " .. ter_name .. " failed: " .. ter_ent)
@@ -214,9 +214,9 @@ function obj_import(shortname)
 
 
 	for i = 2, #models do
-		
+
 		pos = #dir + 1
-		
+
 		local modelBaseName = string.gsub(models[i], ".mod", "")
 		local modelName = models[i]
 
@@ -224,7 +224,7 @@ function obj_import(shortname)
 		--by_name[modelName .. ".mod"] = dir[pos]
 
 		log_write("Attempting to save '" .. modelName .. "' as '" .. modelName)
-		
+
 		local mod_ent = obj.Import("cache/" .. modelBaseName .. ".obj", dir, true, shortname)
 		mod_ent.bones = {}
 		mod_ent.bone_assignments = {}
@@ -242,7 +242,7 @@ function obj_import(shortname)
 	--log_write("zon pos: "..pos)
 	dir[pos] = {pos = pos, name = zon_name}
 	by_name[zon_name] = dir[pos]
-	
+
 	local s, zon_ent = pcall(zon.Write, zon_data, zon_name, eqg.CalcCRC(zon_name))
 	if not s then
 		error("zon.write " .. zon_name .. " failed: " .. zon_ent)
@@ -263,7 +263,7 @@ function obj_import(shortname)
 end
 
 function main_cmd(arg1, arg2, arg3)
-	io.stdout:write("executing eqgzi v1.8.2 ")
+	io.stdout:write("executing eqgzi v1.9.1 ")
 
 	local args = ""
 	if arg1 and string.len(arg1) then
@@ -280,7 +280,7 @@ function main_cmd(arg1, arg2, arg3)
 		io.stdout:write(" " .. arg3)
 		args = args .. " " .. arg3
 	end
-	
+
 	io.stdout:write("\n")
 
 	local cmdType = ""
@@ -300,12 +300,12 @@ function main_cmd(arg1, arg2, arg3)
 			obj_path = cmd
 		else
 			shortname = cmd
-		end	
+		end
 	end
 
 	if cmdType == "import" then
 		if shortname == "" then
-			error("usage: eqgzi import <zone>")		
+			error("usage: eqgzi import <zone>")
 		end
 
 		obj_import(shortname)
