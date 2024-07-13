@@ -156,7 +156,7 @@ function obj.Import(path, dir, appending, shortname)
 		log_write("Added " .. #material_flags .. " flags based on " .. shortname .. "_material.txt")
 	end
 
-	local last_material = { flag = 65536, shader = "Opaque_MaxCB1.fx"}
+	local last_material = { flag = 65536, shader = "Opaque_MaxC1.fx"}
 	for line in f:lines() do
 		local cmd, args = line:match("%s*(%S+)%s([^\n]+)")
 		if cmd and args then
@@ -182,7 +182,7 @@ function obj.Import(path, dir, appending, shortname)
 					
 					last_material = material_flags[args]
 					if not last_material then
-						last_material = { flag = 65536, shader = "Opaque_MaxCB1.fx"}
+						last_material = { flag = 65536, shader = "Opaque_MaxC1.fx"}
 					end
 
 					if not cur_index then
