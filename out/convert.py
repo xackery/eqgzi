@@ -14,7 +14,7 @@ npcs = []
 class SpawnGroup:
     def __init__(self, id):
         self.id = id
-        self.name = ""        
+        self.name = ""
         self.spawn_limit = 0
         self.dist = 0
         self.max_x = 0
@@ -115,7 +115,7 @@ def process(name, location, o) -> bool:
     # check for any emitter definitions, any object can contain them
     if o.get("emit_id", 0) != 0:
         print("writing out emit_id "+str(o.get("emit_id", "1"))+" from object "+ name)
-        fe.write(name + "^" + str(o.get("emit_id", "1")) + "^" + roundFloatStr(-location.y*2) + "^" + roundFloatStr(location.x*2) +"^" + roundFloatStr(location.z*2) + "^" + o.get("emit_duration", "90000000") + "\n")   
+        fe.write(name + "^" + str(o.get("emit_id", "1")) + "^" + roundFloatStr(-location.y*2) + "^" + roundFloatStr(location.x*2) +"^" + roundFloatStr(location.z*2) + "^" + o.get("emit_duration", "90000000") + "\n")
     if o.get("sound", 0) != 0:
         print("writing out sound "+str(o.get("sound", "1"))+" from object "+ name)
         fsnd.write("2,"+o.get("sound", "none.wav")+",0,")
@@ -165,7 +165,7 @@ def process(name, location, o) -> bool:
         fobjectsql.write(str(o.get("object_tilt_y", "0"))+", ")
         fobjectsql.write(str(o.get("object_min_expansion", "0"))+", ")
         fobjectsql.write(str(o.get("object_max_expansion", "0"))+")")
-    
+
     if o.get("spawngroup_id", "0") != "0":
         id = o.get("spawn2_id", 0)
         if id == 0 and o.name.contains("_") and o.name.split("_")[1].isdigit():
@@ -206,10 +206,10 @@ def process(name, location, o) -> bool:
         fs2.write(str(location.x*2)+", "+str(location.y*2)+", "+str(location.z*2)+", ")
         fs2.write(str(eulerToHeading(o.rotation_euler.z))+ ", "+str(o.get("spawn2_respawntime", "0"))+ ", ")
         fs2.write(str(o.get("spawn2_variance", "0"))+ ", "+str(o.get("spawn2_pathgrid", "0"))+", ")
-        fs2.write(str(o.get("spawn2_version", "0"))+");\n")        
+        fs2.write(str(o.get("spawn2_version", "0"))+");\n")
         return False
 
-    
+
     if o.get("spawngroup_id", "0") != "0":
         id = o.get("spawn2_id", 0)
         if id == 0 and o.name.contains("_") and o.name.split("_")[1].isdigit():
@@ -223,21 +223,21 @@ def process(name, location, o) -> bool:
             spawngroups[spawngroupid] = SpawnGroup(spawngroupid)
         if o.get("spawngroup_name", "0") != "0":
             spawngroups[spawngroupid].name = o["spawngroup_name"]
-            
+
     if o.type == 'LIGHT':
         li = o.data
         if li.type == 'POINT':
             lightName = name.replace(" ", "-")
             if not lightName.startswith("LIB_") and not lightName.startswith("LIT_"):
                 lightName = "LIB_" + lightName
-            fl.write(lightName + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
+            fl.write(lightName + " " + roundFloatStr(-location.x*2) + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
         return False
 
     if o.type == 'EMPTY':
         if o.empty_display_type == 'CUBE':
             fr.write(name.replace(" ", "-") + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.x*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(o.scale.y*2) + " " + roundFloatStr(-o.scale.x*2) + " " + roundFloatStr((o.scale.z)*2) + " " + roundFloatStr(o.get("unknowna", 0)) + " " + roundFloatStr(o.get("unknownb", 0)) + " " + roundFloatStr(o.get("unknownc", 0)) + "\n")
         return False
-    
+
     if o.name.endswith("_hide"):
         print("Removing " + o.name + " from terrain export (hide suffix)")
         return False
@@ -258,7 +258,7 @@ bpy.ops.object.mode_set(mode = 'OBJECT')
 
 print("Step 3) Writing material properties...")
 for m in bpy.data.materials:
-    fm.write("m " + m.name.replace(" ", "-") + " " + str(m.get("flag", 65536)) + " " + str(m.get("fx", "Opaque_MaxCB1.fx")) + "\n")
+    fm.write("m " + m.name.replace(" ", "-") + " " + str(m.get("flag", 65536)) + " " + str(m.get("fx", "Opaque_MaxC1.fx")) + "\n")
     for tree in m.texture_paint_slots:
         print("tree " +tree)
         for node in tree:
@@ -286,8 +286,8 @@ for m in bpy.data.materials:
             print(name+".txt: copying animated texture to cache: "+line)
             shutil.copyfile(line, "cache/"+line)
         shutil.copyfile(name+".txt", "cache/"+name+".txt")
-        
-            
+
+
     for prop in m.items():
         for k in prop:
             if not isinstance(k, str):
@@ -295,11 +295,11 @@ for m in bpy.data.materials:
             if k.startswith("e_"):
                 eValue = str(m[k])
                 if eValue.find(" ") == -1:
-                    eValue = "0 "+eValue                
+                    eValue = "0 "+eValue
                 fm.write("e " + m.name.replace(" ", "-") + " " +  k + " " + eValue +"\n")
                 for entry in eValue.split(" "):
                     if entry.find(".dds") == -1:
-                        continue                
+                        continue
                     if not os.path.exists(entry):
                         print("failed to find "+entry+" in current path, defined on material "+m.name)
                         exit(1)
@@ -310,7 +310,7 @@ for m in bpy.data.materials:
 
 print("Step 4) Removing any hidden objects...")
 for o in bpy.data.objects:
-    if not o.visible_get(view_layer=bpy.context.view_layer): 
+    if not o.visible_get(view_layer=bpy.context.view_layer):
         print("removing " + o.name + " (not active view)")
         bpy.data.objects.remove(o, do_unlink=True)
         continue
@@ -327,7 +327,7 @@ for o in bpy.data.objects:
     if not col:
         continue
     print(col.name +" has a link instance as "+o.name)
-    
+
     col.library.reload()
     col = o.instance_collection
     for co in col.objects:
@@ -360,7 +360,7 @@ for o in bpy.data.objects:
         fdoorsql.write("'"+base_name+"', ")
         fdoorsql.write("'"+objName.replace(" ", "-").replace(".obj", "").upper()+"', ")
         fdoorsql.write(roundFloatStr(o.location.x*2) + ", " + roundFloatStr(-o.location.y*2) + ", " + roundFloatStr(o.location.z*2)+", ")
-        
+
         fdoorsql.write(str(eulerToHeading(o.rotation_euler.z))+", ") # heading
         fdoorsql.write(str(o.get("door_opentype", "0"))+", ")
         fdoorsql.write(str(o.get("door_guild", "0"))+", ")
@@ -395,7 +395,7 @@ for o in bpy.data.objects:
             bpy.data.objects.remove(co, do_unlink=True)
         continue
     obj_file = os.path.join(cache_path, objName)
-    
+
     #for attr in dir(col):
     #    print("col.%s = %r" % (attr, getattr(col, attr)))
     for co in col.objects:
