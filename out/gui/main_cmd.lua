@@ -2,6 +2,7 @@
 local lfs = require "lfs"
 local eqg = require "luaeqg"
 local obj = require "gui/obj"
+local version = require("gui/version")
 require "gui/loader"
 
 dir = {}
@@ -263,7 +264,7 @@ function obj_import(shortname)
 end
 
 function main_cmd(arg1, arg2, arg3)
-	io.stdout:write("executing eqgzi v1.9.1 ")
+	io.stdout:write("executing eqgzi " .. version.Build)
 
 	local args = ""
 	if arg1 and string.len(arg1) then
@@ -290,7 +291,10 @@ function main_cmd(arg1, arg2, arg3)
 
 	for cmd in string.gmatch(args, "%S+") do
 		log_write(cmd)
-		if cmd:lower() == "import" then
+		if cmd:lower() == "version" then
+			print("eqgzi " .. version.Build)
+			return
+		elseif cmd:lower() == "import" then
 			cmdType = "import"
 		elseif cmd == "" then
 
@@ -305,6 +309,7 @@ function main_cmd(arg1, arg2, arg3)
 
 	if cmdType == "import" then
 		if shortname == "" then
+			print("eqgzi " .. version.Build)
 			error("usage: eqgzi import <zone>")
 		end
 
@@ -312,5 +317,6 @@ function main_cmd(arg1, arg2, arg3)
 		return
 	end
 
+	print("eqgzi " .. version.Build)
 	log_write("usage: eqgzi [import <zone>]")
 end

@@ -2,6 +2,7 @@
 local lfs = require "lfs"
 local eqg = require "luaeqg"
 local obj = require "gui/obj"
+local version = require("gui/version")
 
 function assert(result, msg)
 	if result then return result end
@@ -38,7 +39,9 @@ local displays = {
 require "gui/loader"
 require "gui/s3d"
 
-local title = "EQG Zone Importer v1.9.1"
+local version = require("gui/version")
+
+local title = "EQG Zone Importer " .. version.Build
 local window
 local tabs = iup.tabs{padding = "5x5"}
 
