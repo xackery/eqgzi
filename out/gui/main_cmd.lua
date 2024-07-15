@@ -264,7 +264,7 @@ function obj_import(shortname)
 end
 
 function main_cmd(arg1, arg2, arg3)
-	io.stdout:write("executing eqgzi " .. version.Build)
+	io.stdout:write("executing eqgzi")
 
 	local args = ""
 	if arg1 and string.len(arg1) then
@@ -290,11 +290,13 @@ function main_cmd(arg1, arg2, arg3)
 	local obj_path = ""
 
 	for cmd in string.gmatch(args, "%S+") do
-		log_write(cmd)
+
 		if cmd:lower() == "version" then
 			print("eqgzi " .. version.Build)
 			return
-		elseif cmd:lower() == "import" then
+		end
+		log_write(cmd)
+		if cmd:lower() == "import" then
 			cmdType = "import"
 		elseif cmd == "" then
 
@@ -310,7 +312,7 @@ function main_cmd(arg1, arg2, arg3)
 	if cmdType == "import" then
 		if shortname == "" then
 			print("eqgzi " .. version.Build)
-			error("usage: eqgzi import <zone>")
+			error("usage: eqgzi import <zone>asd")
 		end
 
 		obj_import(shortname)
