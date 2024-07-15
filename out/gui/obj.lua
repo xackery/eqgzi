@@ -306,6 +306,7 @@ function obj.Import(path, dir, appending, shortname)
 		local anim_img_func = function(name)
 			name = string.gsub(name, ".dds", "")
 			name = string.gsub(name, ".png", "")
+			name = string.gsub(name, ".jpg", "")
 
 
 			local txt_path = "cache/"..name..".txt"
@@ -322,6 +323,10 @@ function obj.Import(path, dir, appending, shortname)
 						load_img(line)
 					end
 					if string.find(line:lower(), ".png$") then
+						--log_write("Material " .. name .. " had animation ref to '" .. line .. "' listed")
+						load_img(line)
+					end
+					if string.find(line:lower(), ".jpg$") then
 						--log_write("Material " .. name .. " had animation ref to '" .. line .. "' listed")
 						load_img(line)
 					end
