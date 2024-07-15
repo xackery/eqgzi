@@ -1,6 +1,6 @@
 out/map_edit/*
 out/*.zip
-
+test/*
 
 *_triangles.txt
 release-history/

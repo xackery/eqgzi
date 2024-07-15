@@ -264,7 +264,7 @@ function obj_import(shortname)
 end
 
 function main_cmd(arg1, arg2, arg3)
-	io.stdout:write("executing eqgzi")
+	io.stdout:write("executing eqgzi " .. version.Build)
 
 	local args = ""
 	if arg1 and string.len(arg1) then
