@@ -52,6 +52,7 @@ class Writer:
     def __init__(self, path):
         self.isCreated = False
         self.path = path
+        self.w = None
     def IsCreated(self):
         return self.isCreated
     def write(self, text):
@@ -63,15 +64,20 @@ class Writer:
                 self.isCreated = True
                 if self.path.endswith("_EnvironmentEmitters.txt"):
                     self.w.write("Name^EmitterDefIdx^X^Y^Z^Lifespan\n")
-                if self.path.endswith("_doors.sql"):
+                elif self.path.endswith("_doors.sql"):
                     self.w.write("DELETE FROM doors WHERE zone = '" + base_name + "';\n")
                     self.w.write("INSERT INTO doors (doorid, zone, `name`, pos_x, pos_y, pos_z, heading, opentype, guild, lockpick, keyitem, nokeyring, triggerdoor, triggertype, disable_timer, doorisopen, door_param, dest_zone, dest_instance, dest_x, dest_y, dest_z, dest_heading, invert_state, incline, size, buffer, client_version_mask, is_ldon_door, min_expansion, max_expansion) VALUES\n")
-                if self.path.endswith("_object.sql"):
+                elif self.path.endswith("_object.sql"):
                     self.w.write("DELETE FROM object WHERE zoneid = " + zoneid + ";\n")
                     self.w.write("INSERT INTO object (zoneid, `version`, xpos, ypos, zpos, heading, itemid, charges, objectname, `type`, icon, unknown08, unknown10, unknown20, unknown24, unknown60, unknown64, unknown68, unknown72, unknown76, unknown84, size, tilt_x, tilt_y, min_expansion, max_expansion) VALUES\n")
             self.w.write(text)
+            self.w.flush()  # Ensure data is written to disk immediately
         except Exception as e:
             log(f"Error writing to {self.path}: {e}")
+    def close(self):
+        if self.isCreated and self.w:
+            self.w.close()
+            self.isCreated = False
 
 def eulerToHeading(value):
     return round(180 / pi * value / 360 * 512)
@@ -228,11 +234,23 @@ def process(name, location, o) -> bool:
 
         if o.type == 'LIGHT':
             li = o.data
+            log(f"Processing light {o.name} (type: {li.type}, visible: {o.visible_get()})")
             if li.type == 'POINT':
                 lightName = name.replace(" ", "-")
                 if not lightName.startswith("LIB_") and not lightName.startswith("LIT_"):
                     lightName = "LIB_" + lightName
-                fl.write(lightName + " " + roundFloatStr(-location.x*2) + " " + roundFloatStr(-location.y*2) + " " + roundFloatStr(location.z*2) + " " + roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
+                light_data = (lightName + " " + roundFloatStr(-location.x*2) + " " + 
+                              roundFloatStr(-location.y*2) + " " + roundFloatStr(location.z*2) + " " + 
+                              roundFloatStr(li.color[0]) + " " + roundFloatStr(li.color[2]) + " " + 
+                              roundFloatStr(li.color[1]) + " " + roundFloatStr(li.energy/10) + "\n")
+                log(f"Attempting to write light data: {light_data.strip()} to {fl.path}")
+                try:
+                    fl.write(light_data)
+                    log(f"Successfully wrote {lightName} to {fl.path}")
+                except Exception as e:
+                    log(f"Error writing {lightName} to {fl.path}: {e}")
+            else:
+                log(f"Skipping {o.name} - not a POINT light, type is {li.type}")
             return False
 
         if o.type == 'EMPTY':
@@ -481,5 +499,18 @@ try:
 except Exception as e:
     log(f"Error in Step 7: {e}")
     raise
+
+log("Closing all output files...")
+fe.close()
+fsnd.close()
+fl.close()
+fr.close()
+fm.close()
+fmod.close()
+fsg.close()
+fs2.close()
+fdoor.close()
+fdoorsql.close()
+fobjectsql.close()
 
 log("Script completed successfully")
