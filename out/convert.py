@@ -23,7 +23,7 @@ def log(message):
         f.write(f"{message}\n")
     print(message)
 
-log("eqgzi v1.9.2 converter (full version with flag fix) starting...")
+log("eqgzi v1.9.3 converter (full version with flag fix) starting...")
 
 class npcType:
     def __init__(self, npcid, npcname):
@@ -362,17 +362,17 @@ try:
                 for mat_slot in co.material_slots:
                     if mat_slot.material and mat_slot.material.name not in processed_materials:
                         m = mat_slot.material
-                        flag = m.get("flag", 65536)  # Get flag from linked material
+                        flag = m.get("flag", 65536)
                         fx = m.get("fx", "Opaque_MaxC1.fx")
-                        mat_name = f"{col.name}-material"  # Consistent naming
+                        mat_name = f"{col.name}-material"
                         fm.write(f"m {mat_name} {flag} {fx}\n")
                         processed_materials.add(m.name)
                         log(f"Added linked material {mat_name} with flag={flag}, fx={fx} for {col.name}")
-            if co.type != 'MESH':
-                bpy.data.objects.remove(co, do_unlink=True)
+        
         if not col.library:
             log(col.name + " has no library data, skipping export")
             continue
+        
         bpy.ops.object.select_all(action='DESELECT')
         isExported = col.name in exportedMods
         if not isExported:
@@ -421,8 +421,6 @@ try:
 
         if isExported:
             log(col.name + " is already exported, only adding placement instance data")
-            for co in col.objects:
-                bpy.data.objects.remove(co, do_unlink=True)
             continue
 
         obj_file = os.path.join(cache_path, objName)
@@ -432,52 +430,51 @@ try:
             co.select_set(True)
         log(f"Exporting linked object {objName}")
         bpy.ops.export_scene.obj(filepath=obj_file, check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=True, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
-        bpy.data.objects.remove(o, do_unlink=True)
+        
+        # Check if Step 5 is removing lights
+        log(f"Before removal: Checking instance object {o.name}, type={o.type}")
+        if o.get("door_id", "0") == "0":
+            for co in col.objects:
+                log(f"Checking collection object {co.name}, type={co.type}")
+                if co.type == 'MESH':
+                    log(f"Removing linked mesh object {co.name} from scene after export")
+                    bpy.data.objects.remove(co, do_unlink=True)
+                else:
+                    log(f"Preserving non-mesh object {co.name} (type={co.type}) in collection")
+        else:
+            log(f"Preserving all objects in {col.name} as it has door data")
+
+        # Preserve lights at the instance level
+        if o.type != 'LIGHT':
+            log(f"Removing instance object {o.name}, type={o.type}")
+            bpy.data.objects.remove(o, do_unlink=True)
+        else:
+            log(f"Preserving instance object {o.name} as it is a light")
 except Exception as e:
     log(f"Error in Step 5: {e}")
     raise
 
-if fdoorsql.IsCreated():
-    fdoorsql.write(";\n")
-
 log("Step 6) Processing zone objects and exporting _mod objects to .mod...")
 bpy.ops.object.select_all(action='DESELECT')
-mesh_signatures = {}
 try:
     for o in list(bpy.data.objects):
-        log(o.name + " processing (" + o.type + ")")
+        log(f"Step 6: Processing object {o.name}, type={o.type}")
         if not process(o.name, o.location, o):
+            log(f"Step 6: Removing processed object {o.name}, type={o.type}")
             bpy.data.objects.remove(o, do_unlink=True)
             continue
-        if o.type != 'MESH':
+        if "_mdl" in o.name.lower():
+            base_obj_name = o.name.lower().replace("_mdl", "").replace(" ", "-")
+            objName = base_obj_name + ".obj"
+            obj_file = os.path.join(cache_path, objName)
+            bpy.ops.object.select_all(action='DESELECT')
+            o.select_set(True)
+            bpy.context.view_layer.objects.active = o
+            log(f"Step 6: Exporting {o.name} as {objName}")
+            bpy.ops.export_scene.obj(filepath=obj_file, check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=True, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
+            fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + "\n")
+            log(f"Step 6: Removing exported _mod object {o.name}")
             bpy.data.objects.remove(o, do_unlink=True)
-            continue
-        base_name_check = o.name.split('.')[0]
-        if base_name_check in exported_models:
-            log(f"Skipping {o.name} - matches linked model {base_name_check} exported in Step 5")
-            bpy.data.objects.remove(o, do_unlink=True)
-            continue
-        if o.data:
-            mesh_key = (len(o.data.vertices), len(o.data.edges), len(o.data.polygons))
-            if mesh_key in mesh_signatures:
-                log(f"Skipping duplicate mesh object {o.name} (matches {mesh_signatures[mesh_key]})")
-                bpy.data.objects.remove(o, do_unlink=True)
-                continue
-            mesh_signatures[mesh_key] = o.name
-
-            if "_mod" in o.name.lower():
-                base_obj_name = o.name.lower().replace("_mod", "").replace(" ", "-")
-                objName = base_obj_name + ".obj"
-                obj_file = os.path.join(cache_path, objName)
-                bpy.ops.object.select_all(action='DESELECT')
-                o.select_set(True)
-                bpy.context.view_layer.objects.active = o
-                log(f"Exporting {o.name} as {objName}")
-                bpy.ops.export_scene.obj(filepath=obj_file, check_existing=True, axis_forward='-X', axis_up='Z', filter_glob="*.obj;*.mtl", use_selection=True, use_animation=False, use_mesh_modifiers=True, use_edges=True, use_smooth_groups=False, use_smooth_groups_bitflags=False, use_normals=True, use_uvs=True, use_materials=True, use_triangles=True, use_nurbs=False, use_vertex_groups=False, use_blen_objects=True, group_by_object=False, group_by_material=False, keep_vertex_order=False, global_scale=2, path_mode='COPY')
-                
-                fmod.write(objName + " " + o.name.replace(" ", "-") + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + " " + roundFloatStr(0) + "\n")
-                
-                bpy.data.objects.remove(o, do_unlink=True)
 except Exception as e:
     log(f"Error in Step 6: {e}")
     raise
